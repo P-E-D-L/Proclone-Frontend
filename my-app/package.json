@@ -12,6 +12,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "dayjs": "^1.11.13",
     "js-cookie": "^3.0.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
