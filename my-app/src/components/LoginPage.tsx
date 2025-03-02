@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie'; // Import the js-cookie library
+
+// Function to set a session cookie
+const setSessionCookie = (name: string, value: string) => {
+  Cookies.set(name, value, { expires: 0 }); // create session cookie
+};
+
 
 interface FormData {
   username: string;
@@ -32,6 +39,7 @@ const LoginPage: React.FC = () => {
     // Example of simple login check (replace with authentication logic)
     if (formData.username === 'user' && formData.password === 'password') {
       setError('');
+      setSessionCookie('authCookieTest', 'true');
       localStorage.setItem('isAuthenticated', 'true');
       navigate('/'); // Redirect to admin panel
     } else {

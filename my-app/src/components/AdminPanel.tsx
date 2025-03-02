@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useNavigate, Outlet } from 'react-router-dom';
-
+import dayjs from 'dayjs';
 // Sidebar Component
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+
+  const currentDateTime = dayjs().format('MMMM D, YYYY h:mm A');
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -17,6 +19,12 @@ const Sidebar: React.FC = () => {
         <li><Link to="/" style={styles.sidebarLink}>Dashboard</Link></li>
         <li><Link to="/resources" style={styles.sidebarLink}>Resources</Link></li>
       </ul>
+      <div style={styles.dateTimeContainer}>
+        <p style={styles.dateTimeText}>
+          Current Date & Time:<br />
+          {currentDateTime}
+        </p>
+      </div>
       <button 
         onClick={handleLogout}
         style={{
@@ -85,6 +93,19 @@ const styles = {
     header: {
       fontSize: '28px',
       marginBottom: '20px',
+    },
+    dateTimeContainer: {
+      marginTop: '400px',
+      padding: '10px',
+      backgroundColor: '#444',
+      borderRadius: '6px',
+      color: '#fff',
+      fontSize: '14px',
+      textAlign: 'center' as const,
+    },
+    dateTimeText: {
+      margin: 0,
+      lineHeight: '1.5',
     },
   };
 
