@@ -49,7 +49,8 @@ const LoginPage: React.FC = () => {
 
   return (
     <div style={styles.pageContainer}>
-      <div style={styles.container}>Welcome Back</h2>
+      <div style={styles.container}>
+        <h2 style={styles.title}>Welcome Back</h2>
         <p style={styles.subtitle}>Please sign in to continue</p>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
