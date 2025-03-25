@@ -2,10 +2,10 @@
 FROM node:20 AS builder
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY /my-app/package.json /my-app/package-lock.json ./
 RUN npm install
 
-COPY . .
+COPY my-app ./
 RUN npm run build
 
 # serve app with nginx
