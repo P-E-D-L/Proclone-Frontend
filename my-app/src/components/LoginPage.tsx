@@ -28,22 +28,42 @@ const LoginPage: React.FC = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.username === '' || formData.password === '') {
       setError('Username and password are required');
       return;
     }
-
-    // Example of simple login check (replace with authentication logic)
-    if (formData.username === 'user' && formData.password === 'password') {
-      setError('');
-      setSessionCookie('authCookieTest', 'true');
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/'); // Redirect to admin panel
-    } else {
-      setError('Invalid username or password');
+  
+    try {
+      // Send request to backend for authentication
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for sending/receiving cookies
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+  
+      // Handle the response based on the status
+      if (response.ok) {
+        setError('');
+        setSessionCookie('authCookieTest', 'true'); // You can store a real session cookie if your backend sets it
+        localStorage.setItem('isAuthenticated', 'true');
+        navigate('/'); // Redirect to admin panel
+      } else if (response.status === 401) {
+        setError('Invalid username or password');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Server error. Please try again later.');
     }
   };
 
