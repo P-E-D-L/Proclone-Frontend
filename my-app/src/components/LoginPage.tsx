@@ -45,9 +45,7 @@ const LoginPage: React.FC = () => {
   
       // Handle the response based on the status
       if (response.ok) {
-        // Optional: show "Logging in..." or spinner here
-  
-        // ✅ Confirm session is valid before redirecting
+        // Confirm session is valid before redirecting
         const sessionCheck = await fetch('/api/session', { credentials: 'include' });
         if (sessionCheck.ok) {
           setError('');
