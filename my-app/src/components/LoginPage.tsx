@@ -45,8 +45,17 @@ const LoginPage: React.FC = () => {
   
       // Handle the response based on the status
       if (response.ok) {
-        setError('');
-        navigate('/'); // Redirect to admin panel
+        // Optional: show "Logging in..." or spinner here
+  
+        // ✅ Confirm session is valid before redirecting
+        const sessionCheck = await fetch('/api/session', { credentials: 'include' });
+        if (sessionCheck.ok) {
+          setError('');
+          navigate('/');
+        } else {
+          setError('Login succeeded but session was not established.');
+          console.warn('Session check failed after login');
+        }
       } else if (response.status === 401) {
         setError('Invalid username or password');
       } else {
