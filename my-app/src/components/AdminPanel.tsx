@@ -20,8 +20,8 @@ const Sidebar: React.FC = () => {
    * Handles user logout
    * Removes authentication and redirects to login page
    */
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
+  const handleLogout = async () => {
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
     navigate('/login');
   };
 
