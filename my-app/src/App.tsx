@@ -5,23 +5,10 @@ import AdminPanel from './components/AdminPanel';
 import Dashboard from './components/Dashboard';
 import ResourcesUsage from './components/ResourcesUsage';
 import LoginPage from './components/LoginPage';
+import ProtectedRoute from './components/Authentication/ProtectedRoute';
 
 // used `npm install --save-dev @types/react @types/react-dom @types/react-router-dom
 // and `npm install react-router-dom@latest`
-
-// Simple auth check - you might want to implement a more robust solution
-const isAuthenticated = () => {
-  // Replace this with your actual authentication check
-  return localStorage.getItem('isAuthenticated') === 'true';
-};
-
-// Protected Route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
-};
 
 const App: React.FC = () => {
   return (
@@ -41,10 +28,7 @@ const App: React.FC = () => {
         >
           <Route index element={<Dashboard />} />
           <Route path="resources" element={<ResourcesUsage />} />
-          {/* You can add more routes here for other sections like Settings, etc. */}
         </Route>
-
-        {/* Redirect all other routes to login if not authenticated */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
