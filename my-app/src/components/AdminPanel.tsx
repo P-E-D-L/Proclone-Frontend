@@ -30,8 +30,8 @@ const Sidebar: React.FC = () => {
       <h2 style={styles.sidebarTitle}>Admin Panel</h2>
       {/* Navigation Links */}
       <ul style={styles.sidebarList}>
-        <li><Link to="/" style={styles.sidebarLink}>Dashboard</Link></li>
-        <li><Link to="/resources" style={styles.sidebarLink}>Resources</Link></li>
+        <li><Link to="/admin" style={styles.sidebarLink}>Dashboard</Link></li>
+        <li><Link to="/admin/resources" style={styles.sidebarLink}>Resources</Link></li>
       </ul>
       {/* Date/Time Display */}
       <div style={styles.dateTimeContainer}>
