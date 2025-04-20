@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import './App.css';
 import AdminPanel from './components/AdminPanel';
+import UserPanel from './components/UserPanel';
 import Dashboard from './components/Dashboard';
 import ResourcesUsage from './components/ResourcesUsage';
 import LoginPage from './components/LoginPage';
@@ -17,11 +18,23 @@ const App: React.FC = () => {
         {/* Public route */}
         <Route path="/login" element={<LoginPage />} />
         
-        {/* Protected routes */}
+        {/* Protected user routes */}
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <ProtectedRoute>
+              <UserPanel />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+        </Route>
+
+        {/* Protected admin routes */}
+        <Route 
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly>
               <AdminPanel />
             </ProtectedRoute>
           }
@@ -29,6 +42,7 @@ const App: React.FC = () => {
           <Route index element={<Dashboard />} />
           <Route path="resources" element={<ResourcesUsage />} />
         </Route>
+
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
