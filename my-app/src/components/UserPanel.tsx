@@ -27,11 +27,10 @@ const Sidebar: React.FC = () => {
 
   return (
     <div style={styles.sidebar}>
-      <h2 style={styles.sidebarTitle}>Admin Panel</h2>
+      <h2 style={styles.sidebarTitle}>User Panel</h2>
       {/* Navigation Links */}
       <ul style={styles.sidebarList}>
-        <li><Link to="/admin" style={styles.sidebarLink}>Dashboard</Link></li>
-        <li><Link to="/admin/resources" style={styles.sidebarLink}>Resources</Link></li>
+        <li><Link to="/dashboard" style={styles.sidebarLink}>Dashboard</Link></li>
       </ul>
       {/* Date/Time Display */}
       <div style={styles.dateTimeContainer}>
@@ -63,7 +62,7 @@ const Sidebar: React.FC = () => {
  * - Navigation between different admin sections
  * - Dynamic content rendering through Outlet
  */
-const AdminPanel: React.FC = () => {
+const UserPanel: React.FC = () => {
   return (
     <div style={styles.container}>
       {/* Sidebar Navigation */}
@@ -147,4 +146,4 @@ const styles = {
 };
 
 
-export default AdminPanel;
+export default UserPanel;

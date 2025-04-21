@@ -47,9 +47,13 @@ const LoginPage: React.FC = () => {
       if (response.ok) {
         // Confirm session is valid before redirecting
         const sessionCheck = await fetch('/api/session', { credentials: 'include' });
-        if (sessionCheck.ok) {
-          setError('');
-          navigate('/');
+        const data = await sessionCheck.json();
+        setError('');
+
+        if (data.isAdmin) {
+          navigate('/admin');
+        } else if (!data.isAdmin) {
+          navigate('/dashboard');
         } else {
           setError('Login succeeded but session was not established.');
           console.warn('Session check failed after login');
