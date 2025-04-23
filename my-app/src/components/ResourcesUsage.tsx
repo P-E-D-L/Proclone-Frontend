@@ -21,25 +21,35 @@ const ResourcesUsage: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  /**
+   * useEffect hook for fetching resource metrics data
+   */
   useEffect(() => {
+    /**
+     * Async function to fetch resource metrics from the API
+     * This function is defined inside useEffect to maintain access to the setState functions
+     * and to keep the async logic contained within the effect
+     */
     const fetchResources = async () => {
       try {
-        // Simulate fetching resource metrics from an API
+        // Make API request to fetch resource metrics
         const response = await fetch('/api/resources');
-        if (!response.ok) {
+        if (!response.ok) { // Check if the response is successful
           throw new Error('Network response was not ok');
         }
+        // Parse the JSON response and update the resources state
         const data: ResourceMetric[] = await response.json();
         setResources(data);
         setLoading(false);
       } catch (error) {
+        // Handle any errors during the fetch operation
         setError('Failed to load resource metrics');
-      } finally {
-        setLoading(false);
+      } finally {        
+        setLoading(false); // Always set loading to false when the operation completes
       }
     };
-    fetchResources();
-  }, []);
+    fetchResources(); // Execute the fetch operation
+  }, []); // Empty dependency array means this effect runs once on mount
 
   /**
    * Returns the appropriate color for each status level
