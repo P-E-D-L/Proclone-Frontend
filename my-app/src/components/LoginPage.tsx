@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import logo from './kaminoLogo.png'; // Replace with the actual path
 
 interface FormData {
   username: string;
@@ -69,14 +71,49 @@ const LoginPage: React.FC = () => {
     }
   };
 
+    // return (
+  //   <div style={styles.pageContainer}>
+  //     <div style={styles.container}>
+  //       <h2 style={styles.title}>Welcome Back</h2>
+  //       <p style={styles.subtitle}>Please sign in to continue</p>
+  //       <form onSubmit={handleSubmit} style={styles.form}>
+  //         <div style={styles.formGroup}>
+  //           <input
+  //             type="text"
+  //             id="username"
+  //             name="username"
+  //             placeholder="Username"
+  //             value={formData.username}
+  //             onChange={handleChange}
+  //             style={styles.input}
+  //           />
+  //         </div>
+  //         <div style={styles.formGroup}>
+  //           <input
+  //             type="password"
+  //             id="password"
+  //             name="password"
+  //             placeholder="Password"
+  //             value={formData.password}
+  //             onChange={handleChange}
+  //             style={styles.input}
+  //           />
+  //         </div>
+  //         {error && <div style={styles.error}>{error}</div>}
+  //         <button type="submit" style={styles.submitButton}>
+  //           Sign In
+  //         </button>
+  //       </form>
+  //     </div>
+  //   </div>
+  // );
+  //};
+
   return (
     <div style={styles.pageContainer}>
-      <div style={styles.container}>
-        <h2 style={styles.title}>Welcome Back</h2>
-        <p style={styles.subtitle}>Please sign in to continue</p>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <input
+      <div style={styles.loginContainer}>
+        <form onSubmit={handleSubmit} style={styles.formContainer}>
+          <input
               type="text"
               id="username"
               name="username"
@@ -84,97 +121,138 @@ const LoginPage: React.FC = () => {
               value={formData.username}
               onChange={handleChange}
               style={styles.input}
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              style={styles.input}
-            />
-          </div>
+          />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            style={styles.input}
+          />
           {error && <div style={styles.error}>{error}</div>}
-          <button type="submit" style={styles.submitButton}>
-            Sign In
+          <button type="submit" style={styles.loginButton}>
+            LOGIN
           </button>
-        </form>
+          </form>
+        </div>
+      <div style={styles.logoContainer}>
+      <img src={logo} alt="Logo" style={{ ...styles.logo, height: 'auto' }} />
+        <p style={styles.appDescription}>
+        <h2>Deploy & Destroy</h2>
+        This application empowers you to rapidly spin up and delete Proxmox templates hosted on the SDC.
+        </p>
       </div>
+      <div style={styles.footer}>Property of Cal Poly Pomona Student Data Center</div>
     </div>
   );
 };
 
-const styles = {
-  pageContainer: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    width: '100%',
-    maxWidth: '400px',
-    padding: '40px',
-    backgroundColor: '#ffffff',
-    borderRadius: '10px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  },
-  title: {
-    margin: '0 0 8px 0',
-    fontSize: '28px',
-    fontWeight: '600' as const,
-    color: '#333',
-    textAlign: 'center' as const,
-  },
-  subtitle: {
-    margin: '0 0 30px 0',
-    color: '#666',
-    textAlign: 'center' as const,
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '20px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-  },
-  input: {
-    padding: '12px 16px',
-    fontSize: '16px',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    transition: 'border-color 0.2s',
-    outline: 'none',
-    '&:focus': {
-      borderColor: '#007bff',
+  const styles: { [key: string]: CSSProperties } = {
+    pageContainer: {
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: '#f0f0f0',
+      alignItems: 'stretch', // Change this to stretch
+      justifyContent: 'center',
+      flexDirection: 'row', // Arrange left and right containers horizontally
+      fontFamily: 'Canvas Sans, sans-serif',
     },
-  },
-  submitButton: {
-    padding: '14px 20px',
-    fontSize: '16px',
-    fontWeight: '500' as const,
-    color: '#fff',
-    backgroundColor: '#007bff',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    '&:hover': {
-      backgroundColor: '#0056b3',
+    logoContainer: {
+      backgroundColor: '#ffffff',
+      padding: '40px',
+      width: '45%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
     },
-  },
-  error: {
-    color: '#dc3545',
-    fontSize: '14px',
-    textAlign: 'center' as const,
-    margin: '-10px 0',
-  },
-};
+    loginContainer: {
+      backgroundColor: '#cecece',
+      padding: '20px',
+      minWidth: '30%',
+      maxWidth: '100px',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logo: {
+      width: '350px',
+      maxWidth: '80%',
+      height: '80px',
+      marginBottom: '20px',
+    },
+    appName: {
+      fontSize: '2.5em',
+      fontWeight: 'bold',
+      color: '#333',
+      marginBottom: '10px',
+    },
+    appDescription: {
+      color: '#666',
+      lineHeight: '1.6',
+      width: '500px',
+      maxWidth: '90%',
+    },
+    formContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '15px',
+      width: '100%',
+      alignItems: 'center',
+    },
+    input: {
+      padding: '12px 16px',
+      fontSize: '16px',
+      border: '1px solid #ddd',
+      borderRadius: '30px',
+      boxSizing: 'border-box',
+      textAlign: 'center',
+      width: '250px',
+      maxWidth: '95%',
+    },
+    loginButton: {
+      backgroundColor: '#414141',
+      color: 'white',
+      padding: '14px 20px',
+      border: 'none',
+      borderRadius: '30px',
+      cursor: 'pointer',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      width: '250px',
+      maxWidth: '95%',
+    },
+    signUpButton: {
+      backgroundColor: '#6c757d',
+      color: 'white',
+      padding: '12px 18px',
+      border: 'none',
+      borderRadius: '5px',
+      cursor: 'pointer',
+      fontSize: '16px',
+    },
+    error: {
+      color: '#dc3545',
+      fontSize: '14px',
+      textAlign: 'center',
+      marginBottom: '10px',
+    },
+    footer: {
+      position: 'fixed',
+      bottom: '0',
+      left: '0',
+      width: '100%',
+      backgroundColor: '#414141',
+      color: '#fff',
+      textAlign: 'center',
+      padding: '10px 0',
+      fontSize: '0.8em',
+    },
+  };
 
 export default LoginPage;
