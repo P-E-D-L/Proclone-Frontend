@@ -71,44 +71,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-    // return (
-  //   <div style={styles.pageContainer}>
-  //     <div style={styles.container}>
-  //       <h2 style={styles.title}>Welcome Back</h2>
-  //       <p style={styles.subtitle}>Please sign in to continue</p>
-  //       <form onSubmit={handleSubmit} style={styles.form}>
-  //         <div style={styles.formGroup}>
-  //           <input
-  //             type="text"
-  //             id="username"
-  //             name="username"
-  //             placeholder="Username"
-  //             value={formData.username}
-  //             onChange={handleChange}
-  //             style={styles.input}
-  //           />
-  //         </div>
-  //         <div style={styles.formGroup}>
-  //           <input
-  //             type="password"
-  //             id="password"
-  //             name="password"
-  //             placeholder="Password"
-  //             value={formData.password}
-  //             onChange={handleChange}
-  //             style={styles.input}
-  //           />
-  //         </div>
-  //         {error && <div style={styles.error}>{error}</div>}
-  //         <button type="submit" style={styles.submitButton}>
-  //           Sign In
-  //         </button>
-  //       </form>
-  //     </div>
-  //   </div>
-  // );
-  //};
-
   return (
     <div style={styles.pageContainer}>
       <div style={styles.loginContainer}>
