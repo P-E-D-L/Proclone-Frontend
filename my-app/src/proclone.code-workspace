@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../../proclone"
+		},
+		{
+			"name": "proclone-deployment",
+			"path": "../../../proclone-deployment"
+		},
+		{
+			"name": "Proclone-Frontend",
+			"path": "../.."
+		}
+	],
+	"settings": {}
+}

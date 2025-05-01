@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, Outlet } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -62,13 +62,32 @@ const Sidebar: React.FC = () => {
  * - Consistent layout structure with sidebar
  * - Navigation between different admin sections
  * - Dynamic content rendering through Outlet
+ * 
+ * USING TO TEST /api/admin/proxmox/resources endpoint and get response in console :)
  */
 const AdminPanel: React.FC = () => {
+  useEffect(() => {
+    fetch('/api/admin/proxmox/resources', {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then((response) => {
+        response.headers.forEach((value, name) => {
+          console.log(`Header: ${name} = ${value}`);
+        });
+        return response.json();
+      })
+      .then((data) => {
+        console.log('Response Data:', data);
+      })
+      .catch((error) => {
+        console.error('Error fetching resources:', error);
+      });
+  }, []);
+
   return (
     <div style={styles.container}>
-      {/* Sidebar Navigation */}
       <Sidebar />
-      {/* Main Content Area - renders child routes */}
       <div style={styles.mainContent}>
         <Outlet />
       </div>
