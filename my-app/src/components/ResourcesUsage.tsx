@@ -1,115 +1,291 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 /**
- * Interface defining the structure of a resource metric
- * Used to track and display various system resource utilization
+ * Interface representing the resource metrics for a single Proxmox node
+ * @interface NodeResourceMetric
+ * @property {string} node_name - The name of the Proxmox node
+ * @property {number} cpu_usage - CPU usage percentage (0-100)
+ * @property {number} memory_total - Total available memory in bytes
+ * @property {number} memory_used - Currently used memory in bytes
+ * @property {number} storage_total - Total available storage in bytes
+ * @property {number} storage_used - Currently used storage in bytes
  */
-interface ResourceMetric {
-  id: number;      // Unique identifier for the resource
-  name: string;    // Display name of the resource
-  usage: number;   // Current usage value
-  limit: number;   // Maximum limit value
-  status: 'Normal' | 'Warning' | 'Critical';  // Current status based on usage
+interface NodeResourceMetric {
+  node_name: string;
+  cpu_usage: number;
+  memory_total: number;
+  memory_used: number;
+  storage_total: number;
+  storage_used: number;
+}
+
+/**
+ * Interface representing the aggregated resource metrics for the entire Proxmox cluster
+ * @interface ClusterResourceMetric
+ * @property {number} total_cpu_usage - Average CPU usage across all nodes
+ * @property {number} total_memory_total - Total memory across all nodes in bytes
+ * @property {number} total_memory_used - Total used memory across all nodes in bytes
+ * @property {number} total_storage_total - Total storage across all nodes in bytes
+ * @property {number} total_storage_used - Total used storage across all nodes in bytes
+ */
+interface ClusterResourceMetric {
+  total_cpu_usage: number;
+  total_memory_total: number;
+  total_memory_used: number;
+  total_storage_total: number;
+  total_storage_used: number;
+}
+
+/**
+ * Interface representing the complete response from the Proxmox API
+ * @interface ResourceResponse
+ * @property {NodeResourceMetric[]} nodes - Array of resource metrics for each node
+ * @property {ClusterResourceMetric} cluster - Aggregated metrics for the entire cluster
+ * @property {string[]} [errors] - Optional array of error messages
+ */
+interface ResourceResponse {
+  nodes: NodeResourceMetric[];
+  cluster: ClusterResourceMetric;
+  errors?: string[];
 }
 
 /**
  * ResourcesUsage Component
+ * 
+ * This component displays resource utilization metrics for a Proxmox cluster,
+ * including both cluster-wide and per-node statistics. It fetches data from
+ * the Proxmox API and presents it in a user-friendly format with progress bars
+ * and color-coded status indicators.
+ * 
+ * The component is divided into two main sections:
+ * 1. Cluster Overview - Shows aggregated metrics for the entire cluster
+ * 2. Node Details - Shows detailed metrics for each individual node
+ * 
+ * @component
+ * @example
+ * <ResourcesUsage />
  */
 const ResourcesUsage: React.FC = () => {
-  // Sample resource metrics data (replace with actual metrics)
-  const resources: ResourceMetric[] = [
-    { id: 1, name: 'CPU Usage', usage: 45, limit: 100, status: 'Normal' },
-    { id: 2, name: 'Memory', usage: 6.2, limit: 8, status: 'Warning' },
-    { id: 3, name: 'Disk Space', usage: 230, limit: 500, status: 'Normal' },
-    { id: 4, name: 'Network Bandwidth', usage: 80, limit: 100, status: 'Critical' },
-  ];
+  // State management for resources data, loading state, and error handling
+  const [resources, setResources] = React.useState<ResourceResponse | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   /**
-   * Returns the appropriate color for each status level
-   * @param status - The current status of the resource
-   * @returns Color code for the status
+   * Fetches resource metrics from the Proxmox API
+   * This effect runs once when the component mounts
    */
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'Normal':
-        return '#28a745';  // Green
-      case 'Warning':
-        return '#ffc107';  // Yellow
-      case 'Critical':
-        return '#dc3545';  // Red
-      default:
-        return '#6c757d';  // Gray
-    }
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        // Make API request to fetch resource metrics
+        const response = await fetch('/api/admin/proxmox/resources');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data: ResourceResponse = await response.json();
+        setResources(data);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load resource metrics');
+        setLoading(false);
+      }
+    };
+    fetchResources();
+  }, []);
+
+  /**
+   * Determines the color for resource status indicators based on usage percentage
+   * @param {number} usage - Current usage value
+   * @param {number} total - Total available value
+   * @returns {string} Hex color code for the status indicator
+   */
+  const getStatusColor = (usage: number, total: number): string => {
+    const percentage = (usage / total) * 100;
+    if (percentage >= 90) return '#dc3545';  // Red for Critical (≥90%)
+    if (percentage >= 70) return '#ffc107';  // Yellow for Warning (70-89%)
+    return '#28a745';  // Green for Normal (<70%)
   };
 
   /**
-   * Calculates the percentage of resource usage
-   * @param usage - Current usage value
-   * @param limit - Maximum limit value
-   * @returns Percentage of resource usage
+   * Converts bytes to a human-readable format in GB
+   * @param {number} bytes - Number of bytes to convert
+   * @returns {string} Formatted string with GB value
    */
-  const getUsagePercentage = (usage: number, limit: number): number => {
-    return (usage / limit) * 100;
+  const formatBytes = (bytes: number): string => {
+    const gb = bytes / (1024 * 1024 * 1024);
+    return `${gb.toFixed(2)} GB`;
   };
+
+  // Loading and error states
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!resources) return <div>No data available</div>;
 
   return (
     <div style={styles.contentArea}>
       <h2>System Resources</h2>
-      {/* Grid of resource metric cards */}
-      <div style={styles.metricsGrid}>
-        {resources.map((resource) => (
-          <div key={resource.id} style={styles.metricCard}>
-            {/* Metric title */}
-            <h3 style={styles.metricTitle}>{resource.name}</h3>
-            {/* Progress bar */}
+      
+      {/* Cluster Overview Section */}
+      <div style={styles.clusterSection}>
+        <h3>Cluster Overview</h3>
+        <div style={styles.metricsGrid}>
+          {/* CPU Usage Card */}
+          <div style={styles.metricCard}>
+            <h4>CPU Usage</h4>
             <div style={styles.progressBarContainer}>
               <div 
                 style={{
                   ...styles.progressBar,
-                  width: `${getUsagePercentage(resource.usage, resource.limit)}%`,
-                  backgroundColor: getStatusColor(resource.status)
+                  width: `${resources.cluster.total_cpu_usage}%`,
+                  backgroundColor: getStatusColor(resources.cluster.total_cpu_usage, 100)
                 }}
               />
             </div>
-            {/* Usage details and status */}
             <div style={styles.metricDetails}>
-              <span>
-                {resource.usage} / {resource.limit} {
-                  resource.name === 'Memory' ? 'GB' : 
-                  resource.name === 'Disk Space' ? 'GB' : 
-                  resource.name === 'Network Bandwidth' ? 'Mbps' : '%'
-                }
-              </span>
-              <span style={{ color: getStatusColor(resource.status) }}>
-                {resource.status}
-              </span>
+              <span>{resources.cluster.total_cpu_usage.toFixed(2)}%</span>
             </div>
           </div>
-        ))}
+          
+          {/* Memory Usage Card */}
+          <div style={styles.metricCard}>
+            <h4>Memory Usage</h4>
+            <div style={styles.progressBarContainer}>
+              <div 
+                style={{
+                  ...styles.progressBar,
+                  width: `${(resources.cluster.total_memory_used / resources.cluster.total_memory_total) * 100}%`,
+                  backgroundColor: getStatusColor(resources.cluster.total_memory_used, resources.cluster.total_memory_total)
+                }}
+              />
+            </div>
+            <div style={styles.metricDetails}>
+              <span>{formatBytes(resources.cluster.total_memory_used)} / {formatBytes(resources.cluster.total_memory_total)}</span>
+            </div>
+          </div>
+          
+          {/* Storage Usage Card */}
+          <div style={styles.metricCard}>
+            <h4>Storage Usage</h4>
+            <div style={styles.progressBarContainer}>
+              <div 
+                style={{
+                  ...styles.progressBar,
+                  width: `${(resources.cluster.total_storage_used / resources.cluster.total_storage_total) * 100}%`,
+                  backgroundColor: getStatusColor(resources.cluster.total_storage_used, resources.cluster.total_storage_total)
+                }}
+              />
+            </div>
+            <div style={styles.metricDetails}>
+              <span>{formatBytes(resources.cluster.total_storage_used)} / {formatBytes(resources.cluster.total_storage_total)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Node Details Section */}
+      <div style={styles.nodesSection}>
+        <h3>Node Details</h3>
+        <div style={styles.metricsGrid}>
+          {resources.nodes.map((node) => (
+            <div key={node.node_name} style={styles.nodeCard}>
+              <h4>{node.node_name}</h4>
+              
+              {/* Node CPU Usage */}
+              <div style={styles.metricCard}>
+                <h5>CPU Usage</h5>
+                <div style={styles.progressBarContainer}>
+                  <div 
+                    style={{
+                      ...styles.progressBar,
+                      width: `${node.cpu_usage}%`,
+                      backgroundColor: getStatusColor(node.cpu_usage, 100)
+                    }}
+                  />
+                </div>
+                <div style={styles.metricDetails}>
+                  <span>{node.cpu_usage.toFixed(2)}%</span>
+                </div>
+              </div>
+
+              {/* Node Memory Usage */}
+              <div style={styles.metricCard}>
+                <h5>Memory Usage</h5>
+                <div style={styles.progressBarContainer}>
+                  <div 
+                    style={{
+                      ...styles.progressBar,
+                      width: `${(node.memory_used / node.memory_total) * 100}%`,
+                      backgroundColor: getStatusColor(node.memory_used, node.memory_total)
+                    }}
+                  />
+                </div>
+                <div style={styles.metricDetails}>
+                  <span>{formatBytes(node.memory_used)} / {formatBytes(node.memory_total)}</span>
+                </div>
+              </div>
+
+              {/* Node Storage Usage */}
+              <div style={styles.metricCard}>
+                <h5>Storage Usage</h5>
+                <div style={styles.progressBarContainer}>
+                  <div 
+                    style={{
+                      ...styles.progressBar,
+                      width: `${(node.storage_used / node.storage_total) * 100}%`,
+                      backgroundColor: getStatusColor(node.storage_used, node.storage_total)
+                    }}
+                  />
+                </div>
+                <div style={styles.metricDetails}>
+                  <span>{formatBytes(node.storage_used)} / {formatBytes(node.storage_total)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 };
 
-// Styles object containing all component styles
+/**
+ * Styles object containing all component styles
+ * @type {Object}
+ */
 const styles = {
   // Main content area container
   contentArea: {
     padding: '20px',
   },
+  // Cluster overview section
+  clusterSection: {
+    marginBottom: '30px',
+  },
+  // Node details section
+  nodesSection: {
+    marginTop: '20px',
+  },
   // Grid layout for metric cards
   metricsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
     gap: '20px',
     marginTop: '20px',
   },
-  // Individual metric card styling
-  metricCard: {
+  // Individual node card styling
+  nodeCard: {
     backgroundColor: 'white',
     borderRadius: '8px',
     padding: '20px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  // Individual metric card styling
+  metricCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: '6px',
+    padding: '15px',
+    marginBottom: '15px',
   },
   // Metric title styling
   metricTitle: {
@@ -124,20 +300,20 @@ const styles = {
     backgroundColor: '#e9ecef',
     borderRadius: '5px',
     overflow: 'hidden',
+    margin: '10px 0',
   },
   // Progress bar fill
   progressBar: {
     height: '100%',
     transition: 'width 0.3s ease',
   },
-  // Container for usage details and status
+  // Container for usage details
   metricDetails: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginTop: '10px',
     fontSize: '14px',
     color: '#666',
   },
 };
 
-export default ResourcesUsage; 
+export default ResourcesUsage;
