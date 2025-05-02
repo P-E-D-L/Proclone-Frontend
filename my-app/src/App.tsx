@@ -4,6 +4,7 @@ import './App.css';
 import AdminPanel from './components/AdminPanel';
 import UserPanel from './components/UserPanel';
 import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/AdminDashboard';
 import ResourcesUsage from './components/ResourcesUsage';
 import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/Authentication/ProtectedRoute';
@@ -39,7 +40,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<AdminDashboard />} />
           <Route path="resources" element={<ResourcesUsage />} />
         </Route>
 
