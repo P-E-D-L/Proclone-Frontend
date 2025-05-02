@@ -85,6 +85,25 @@ const AdminPanel: React.FC = () => {
       });
   }, []);
 
+  useEffect(() => {
+    fetch('/api/admin/proxmox/virtualmachines', {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then((response) => {
+        response.headers.forEach((value, name) => {
+          console.log(`Header: ${name} = ${value}`);
+        });
+        return response.json();
+      })
+      .then((data) => {
+        console.log('Response Data:', data);
+      })
+      .catch((error) => {
+        console.error('Error fetching resources:', error);
+      });
+  }, []);
+
   return (
     <div style={styles.container}>
       <Sidebar />
