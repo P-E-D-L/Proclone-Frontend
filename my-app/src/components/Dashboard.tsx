@@ -5,23 +5,102 @@ import React, { CSSProperties, useState, useEffect } from 'react';
  * 
  * Main dashboard view for non-admin users.
  */
+
+interface Template {
+  name: string;
+}
+
+interface ApiResponse {
+  templates: Template[];
+}
+
 const Dashboard: React.FC = () => {
+
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/proxmox/templates');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: ApiResponse = await response.json();
+        setTemplates(data.templates);
+        setLoading(false);
+      } catch (e: any) {
+        setError(e.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleSelect = (templateName: string) => {
+    setSelectedTemplate(templateName);
+  };
+
+  const handleSubmit = () => {
+    if (selectedTemplate) {
+      console.log('Submitting selected template:', selectedTemplate);
+      alert(`POST request with selected template: ${selectedTemplate} (not yet implemented)`);
+      // In a real application, you would make a POST request here
+      // with the selectedTemplate.
+    } else {
+      alert('Please select a template before submitting.');
+    }
+  };
+
+  if (loading) {
+    return <p>Loading templates...</p>;
+  }
+
+  if (error) {
+    return <p>Error fetching templates: {error}</p>;
+  }
+
   return (
     // Main dashboard container
     <div style={styles.dashboardContainerInner}>
         {/* Current Deployments */}
-        <div style={styles.currentDeployments}>
+        <div style={styles.deploymentContainers}>
           <div style ={styles.sectionContainer}>
             <p style={styles.currentDeploymentsTitle}>CURRENT DEPLOYMENTS</p>
           </div>
         </div>
 
         {/* Deploy New */}
-        <div style={styles.deployNewContent}>
+        <div style={styles.deploymentContainers}>
         <div style ={styles.sectionContainer}>
           <div style={styles.actionButtons}>
-            <button style={styles.searchDropdownButton}>DROP DOWN SEARCH</button> {/* Implement search/dropdown */}
-            <button style={styles.deployNewButton}>DEPLOY NEW TEMPLATE</button> {/* Implement deploy new functionality */}
+            { /* <button style={styles.searchDropdownButton}>DROP DOWN SEARCH</button> { implement search } */ }
+            <ul style={styles.list}>
+              {templates.map((template) => (
+                <li key={template.name} style={styles.listItem}>
+                  <button
+                    style={{
+                      ...styles.radioButton,
+                      ...(selectedTemplate === template.name
+                        ? styles.radioButtonChecked
+                        : styles.radioButtonUnchecked),
+                    }}
+                    onClick={() => handleSelect(template.name)}
+                  >
+                    {selectedTemplate === template.name && <div style={styles.radioButtonInner} />}
+                  </button>
+                  <span><p style={styles.templateName}>{template.name}</p></span>
+                </li>
+              ))}
+            </ul>
+            <button style={styles.deployNewButton} onClick={handleSubmit} disabled={!selectedTemplate}>
+               DEPLOY NEW TEMPLATE
+            </button>
+
           </div>
         </div>
         </div>
@@ -38,6 +117,11 @@ const styles: { [key: string]: CSSProperties } = {
     backgroundColor: '#f8f9fa', // Light background
     flexDirection: 'column',
     fontFamily: 'Canvas Sans, sans-serif',
+  },
+  templateName: {
+    fontSize: '1.2rem', // Larger font size for template name
+    color: '#222', // Darker text color for template name
+    fontWeight: '500', // Slightly bolder for emphasis
   },
   sectionContainer: {
     backgroundColor: "white",
@@ -64,7 +148,7 @@ const styles: { [key: string]: CSSProperties } = {
     fontWeight: 'bold',
     marginRight: '15px',
   },
-  currentDeployments: {
+  deploymentContainers: {
     width: '90%',
     color: 'white',
     padding: '50px',
@@ -105,7 +189,7 @@ const styles: { [key: string]: CSSProperties } = {
     color: 'white',
     padding: '50px',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
   },
   actionButtons: {
@@ -113,6 +197,7 @@ const styles: { [key: string]: CSSProperties } = {
     display: 'flex',
     gap: '15px',
     alignItems: 'center',
+    flexDirection: 'column',
   },
   currentDeploymentsTitle: {
     backgroundColor: 'transparent', // Make background transparent for a text header
@@ -199,6 +284,60 @@ const styles: { [key: string]: CSSProperties } = {
     textAlign: 'center',
     padding: '10px 0',
     fontSize: '0.8em',
+  },
+  title: {
+    fontSize: '1.5rem',
+    marginBottom: '15px',
+  },
+  list: {
+    listStyleType: 'none',
+    padding: 0,
+  },
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '8px',
+  },
+  radioButton: {
+    border: '1px solid #ccc',
+    borderRadius: '50%',
+    width: '20px',
+    height: '20px',
+    marginRight: '8px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+  radioButtonChecked: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+  },
+  radioButtonInner: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    backgroundColor: 'white',
+  },
+  radioButtonUnchecked: {
+    backgroundColor: 'transparent',
+  },
+  submitButton: {
+    padding: '10px 15px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    marginTop: '20px',
+  },
+  loadingText: {
+    fontStyle: 'italic',
+  },
+  errorText: {
+    color: 'red',
   },
 };
 
