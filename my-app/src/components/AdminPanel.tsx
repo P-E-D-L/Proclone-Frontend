@@ -67,7 +67,7 @@ const Sidebar: React.FC = () => {
  */
 const AdminPanel: React.FC = () => {
   useEffect(() => {
-    fetch('/api/admin/proxmox/resources', {
+    fetch('/api/admin/proxmox/virtualmachines', {
       method: 'GET',
       credentials: 'include',
     })
@@ -86,7 +86,7 @@ const AdminPanel: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch('/api/admin/proxmox/virtualmachines', {
+    fetch('/api/proxmox/templates', {
       method: 'GET',
       credentials: 'include',
     })
