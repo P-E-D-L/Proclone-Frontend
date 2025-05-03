@@ -167,7 +167,7 @@ const AdminPanel: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch('/api/admin/proxmox/pods', {
+    fetch('/api/proxmox/pods', {
       method: 'GET',
       credentials: 'include',
     })
