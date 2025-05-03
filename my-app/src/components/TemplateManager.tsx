@@ -93,12 +93,14 @@ const TemplateManager: React.FC = () => {
       console.log('Deploying template:', selectedTemplate);
       alert(`Deploying template: ${selectedTemplate} (NOT IMPLEMENTED - Should trigger a backend call to deploy)`);
 
+      // this is just for simulation to test deployment appearance until implemented
       const newDeployedTemplate: DeployedTemplate = {
         id: Math.random().toString(36).substr(2, 9),
         templateName: selectedTemplate,
         deployedAt: new Date(),
         status: 'running', // Initial status
       };
+
       setDeployedTemplates(prev => [...prev, newDeployedTemplate]);
       setSelectedTemplate(null);
     } else {

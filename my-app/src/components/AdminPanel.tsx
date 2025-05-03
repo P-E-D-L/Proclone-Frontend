@@ -9,11 +9,11 @@ interface Profile {
 }
 
 /**
- * Sidebar Component
+ * Header Component
  * 
- * A navigation sidebar component that provides:
+ * A navigation header menu component that provides:
+ * - Greets current user
  * - Links to different sections of the admin panel
- * - Current date and time display
  * - Logout functionality
  */
 const Sidebar: React.FC = () => {
@@ -155,47 +155,9 @@ const Menu: React.FC = () => {
  * - Navigation between different admin sections
  * - Dynamic content rendering through Outlet
  * 
- * USING TO TEST /api/admin/proxmox/resources endpoint and get response in console :)
+ * endpoint calls moved to template manager
  */
 const AdminPanel: React.FC = () => {
-
-  useEffect(() => {
-    fetch('/api/admin/proxmox/virtualmachines', {
-      method: 'GET',
-      credentials: 'include',
-    })
-      .then((response) => {
-        response.headers.forEach((value, name) => {
-          console.log(`Header: ${name} = ${value}`);
-        });
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Response Data:', data);
-      })
-      .catch((error) => {
-        console.error('Error fetching resources:', error);
-      });
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/proxmox/templates', {
-      method: 'GET',
-      credentials: 'include',
-    })
-      .then((response) => {
-        response.headers.forEach((value, name) => {
-          console.log(`Header: ${name} = ${value}`);
-        });
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Response Data:', data);
-      })
-      .catch((error) => {
-        console.error('Error fetching resources:', error);
-      });
-  }, []);
 
   return (
     <div style={styles.dashboardContainer}>

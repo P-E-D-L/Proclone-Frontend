@@ -9,11 +9,10 @@ interface Profile {
 }
 
 /**
- * Sidebar Component
+ * Header Component
  * 
- * A navigation sidebar component that provides:
- * - Links to different sections of the admin panel
- * - Current date and time display
+ * A navigation header menu component that provides:
+ * - Greets current user
  * - Logout functionality
  */
 const Menu: React.FC = () => {
@@ -69,18 +68,11 @@ const Menu: React.FC = () => {
   );
 };
 
-/**
- * AdminPanel Component
- * 
- * Main layout component that provides:
- * - Consistent layout structure with sidebar
- * - Navigation between different admin sections
- * - Dynamic content rendering through Outlet
- */
+// user panel, find routes in App
 const UserPanel: React.FC = () => {
   return (
     <div style={styles.dashboardContainer}>
-      {/* Sidebar Navigation */}
+      {/* Header Menu Navigation */}
       <Menu />
       {/* Main Content Area - renders child routes */}
       <div style={styles.mainContent}>
