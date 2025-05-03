@@ -159,6 +159,20 @@ const Menu: React.FC = () => {
  */
 const AdminPanel: React.FC = () => {
 
+  useEffect(() => {
+    fetch('/api/admin/proxmox/pods/all', {
+      method: 'GET',
+      credentials: 'include',
+    })
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/admin/proxmox/pods', {
+      method: 'GET',
+      credentials: 'include',
+    })
+  }, []);
+
   return (
     <div style={styles.dashboardContainer}>
       <Menu />
