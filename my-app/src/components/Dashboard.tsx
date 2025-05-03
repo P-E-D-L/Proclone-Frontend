@@ -49,8 +49,7 @@ const Dashboard: React.FC = () => {
     if (selectedTemplate) {
       console.log('Submitting selected template:', selectedTemplate);
       alert(`POST request with selected template: ${selectedTemplate} (not yet implemented)`);
-      // In a real application, you would make a POST request here
-      // with the selectedTemplate.
+      // IMPLEMENT POST REQUEST HERE
     } else {
       alert('Please select a template before submitting.');
     }
@@ -100,7 +99,6 @@ const Dashboard: React.FC = () => {
             <button style={styles.deployNewButton} onClick={handleSubmit} disabled={!selectedTemplate}>
                DEPLOY NEW TEMPLATE
             </button>
-
           </div>
         </div>
         </div>

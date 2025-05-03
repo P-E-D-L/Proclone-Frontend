@@ -1,210 +1,288 @@
-import React, { useState } from 'react';
-import { PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import React, { CSSProperties, useState, useEffect } from 'react';
+import { PlusCircleIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline';
 
-// Template interface defines the structure for available deployment templates
 interface Template {
-  value: string;  // Unique identifier for the template
-  label: string;  // Display name for the template
+  name: string;
 }
 
-// Environment interface defines the structure for deployed environments
-interface Environment {
-  id: string;     // Unique identifier for the environment
-  name: string;   // Display name for the environment
-  type: string;   // Type of environment (matches template label)
-  status: 'deploying' | 'running' | 'failed';  // Current status of the environment
-  deployedAt: Date;  // Timestamp when the environment was deployed
+interface ApiResponse {
+  templates: Template[];
 }
 
-/**
- * TemplateManager Component
- * 
- * This component manages the deployment templates and displays deployed environments.
- * It provides functionality to:
- * - Select and deploy templates
- * - Delete templates and their associated environments
- * - Display the status of deployed environments
- */
+interface DeployedTemplate {
+  id: string;
+  templateName: string;
+  deployedAt: Date;
+  status: 'running' | 'stopped' | 'failed'; // You might need to adjust this based on your actual deployed template status
+}
+
+interface VM {
+  id: string;
+  name: string;
+  node: string;
+  status: 'running' | 'stopped';
+  vmid: number;
+}
+
+interface VMsApiResponse {
+  virtual_machines: VM[];
+}
+
 const TemplateManager: React.FC = () => {
-  // State for tracking selected templates
-  const [selectedTemplates, setSelectedTemplates] = useState<Template[]>([]);
-  // State for tracking deployed environments
-  const [environments, setEnvironments] = useState<Environment[]>([]);
-  // State for available templates
-  const [templates, setTemplates] = useState<Template[]>([
-    { value: 'web-app', label: 'Web Application' },
-    { value: 'database', label: 'Database Server' },
-    { value: 'api', label: 'API Service' }
-  ]);
+  const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [deployedTemplates, setDeployedTemplates] = useState<DeployedTemplate[]>([]);
+  const [vms, setVms] = useState<VM[]>([]);
+  const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
+  const [loadingAvailableTemplates, setLoadingAvailableTemplates] = useState<boolean>(true);
+  const [errorAvailableTemplates, setErrorAvailableTemplates] = useState<string | null>(null);
+  const [loadingVMs, setLoadingVMs] = useState<boolean>(true);
+  const [errorVMs, setErrorVMs] = useState<string | null>(null);
 
-  /**
-   * Handles the deployment of selected templates
-   * Creates a new environment for each selected template and simulates deployment
-   * After 5 seconds, updates the environment status from 'deploying' to 'running'
-   */
-  const handleAddTemplates = () => {
-    selectedTemplates.forEach(template => {
-      // Create a new environment with unique ID and timestamp
-      const newEnvironment: Environment = {
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch('/api/proxmox/templates');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: ApiResponse = await response.json();
+        setAvailableTemplates(data.templates);
+        setLoadingAvailableTemplates(false);
+      } catch (e: any) {
+        setErrorAvailableTemplates(e.message);
+        setLoadingAvailableTemplates(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
+
+  useEffect(() => {
+    const fetchVMs = async () => {
+      try {
+        const response = await fetch('/api/admin/proxmox/virtualmachines');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: VMsApiResponse = await response.json();
+        const mappedVMs = data.virtual_machines.map(vm => ({
+          id: vm.id,
+          name: vm.name,
+          node: vm.node,
+          status: vm.status,
+          vmid: vm.vmid,
+        }));
+        setVms(mappedVMs);
+        setLoadingVMs(false);
+      } catch (e: any) {
+        setErrorVMs(e.message);
+        setLoadingVMs(false);
+      }
+    };
+
+    fetchVMs();
+  }, []);
+
+  const handleSelectTemplate = (templateName: string) => {
+    setSelectedTemplate(templateName);
+  };
+
+  const handleDeploy = () => {
+    if (selectedTemplate) {
+      console.log('Deploying template:', selectedTemplate);
+      alert(`Deploying template: ${selectedTemplate} (NOT IMPLEMENTED - Should trigger a backend call to deploy)`);
+
+      const newDeployedTemplate: DeployedTemplate = {
         id: Math.random().toString(36).substr(2, 9),
-        name: `${template.label}-${Math.floor(Math.random() * 1000)}`,
-        type: template.label,
-        status: 'deploying',
-        deployedAt: new Date()
+        templateName: selectedTemplate,
+        deployedAt: new Date(),
+        status: 'running', // Initial status
       };
-      
-      // Add the new environment to the list
-      setEnvironments(prev => [...prev, newEnvironment]);
-
-      // Simulate deployment completion after 5 seconds
-      setTimeout(() => {
-        setEnvironments(prev => 
-          prev.map(env => 
-            env.id === newEnvironment.id 
-              ? { ...env, status: 'running' }
-              : env
-          )
-        );
-      }, 5000);
-    });
-    // Clear template selection after deployment
-    setSelectedTemplates([]);
+      setDeployedTemplates(prev => [...prev, newDeployedTemplate]);
+      setSelectedTemplate(null);
+    } else {
+      alert('Please select a template to deploy.');
+    }
   };
 
-  /**
-   * Handles the deletion of selected templates
-   * Removes templates from the available list and
-   * removes any associated deployed environments
-   */
-  const handleDeleteTemplates = () => {
-    // Get the labels of templates being deleted
-    const templatesBeingDeleted = selectedTemplates.map(t => t.label);
-    
-    // Remove the templates from available templates
-    setTemplates(templates.filter(t => !selectedTemplates.some(s => s.value === t.value)));
-    
-    // Remove any deployed environments associated with these templates
-    setEnvironments(prev => prev.filter(env => !templatesBeingDeleted.includes(env.type)));
-    
-    // Clear template selection
-    setSelectedTemplates([]);
+  const handleSelectVm = (vmid: number) => {
+    const newSelection = new Set(selectedVmIds);
+    if (newSelection.has(vmid)) {
+      newSelection.delete(vmid);
+    } else {
+      newSelection.add(vmid);
+    }
+    setSelectedVmIds(newSelection);
   };
 
-  /**
-   * Toggles the selection state of a template
-   * If template is already selected, it will be deselected and vice versa
-   */
-  const toggleTemplate = (template: Template) => {
-    setSelectedTemplates(prev => 
-      prev.some(t => t.value === template.value)
-        ? prev.filter(t => t.value !== template.value)
-        : [...prev, template]
-    );
+  const handleStartVMs = () => {
+    if (selectedVmIds.size > 0) {
+      console.log('Starting VMs:', Array.from(selectedVmIds));
+      alert(`Starting VMs with IDs: ${Array.from(selectedVmIds).join(', ')} (NOT IMPLEMENTED - POST /api/admin/proxmox/virtualmachines/{vmid}/start)`);
+      setVms(prev =>
+        prev.map(vm =>
+          selectedVmIds.has(vm.vmid) && vm.status === 'stopped' ? { ...vm, status: 'running' } : vm
+        )
+      );
+      setSelectedVmIds(new Set());
+    } else {
+      alert('Please select one or more VMs to start.');
+    }
   };
 
-  /**
-   * Returns the appropriate color for each environment status
-   * deploying -> yellow
-   * running -> green
-   * failed -> red
-   */
+  const handleStopVMs = () => {
+    if (selectedVmIds.size > 0) {
+      console.log('Stopping VMs:', Array.from(selectedVmIds));
+      alert(`Stopping VMs with IDs: ${Array.from(selectedVmIds).join(', ')} (NOT IMPLEMENTED - POST /api/admin/proxmox/virtualmachines/{vmid}/shutdown)`);
+      setVms(prev =>
+        prev.map(vm =>
+          selectedVmIds.has(vm.vmid) && vm.status === 'running' ? { ...vm, status: 'stopped' } : vm
+        )
+      );
+      setSelectedVmIds(new Set());
+    } else {
+      alert('Please select one or more VMs to stop.');
+    }
+  };
+
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'deploying': return '#ffc107';
       case 'running': return '#28a745';
-      case 'failed': return '#dc3545';
+      case 'stopped': return '#dc3545';
+      case 'failed': return '#ffc107'; // Or any other color for failed
       default: return '#6c757d';
     }
   };
 
+  if (loadingAvailableTemplates || loadingVMs) {
+    return <p>Loading data...</p>;
+  }
+
+  if (errorAvailableTemplates || errorVMs) {
+    return <p>Error fetching data: {errorAvailableTemplates || errorVMs}</p>;
+  }
+
   return (
     <div>
-      {/* Template Management Section */}
       <div style={styles.container}>
-        <h3 style={styles.header}>Template Management</h3>
-        
-        {/* Available Templates List */}
+        <h3 style={styles.header}>Available Templates</h3>
         <div style={styles.templateList}>
-          <h4>Available Templates</h4>
-          {templates.map((template) => (
-            <div 
-              key={template.value} 
+          <h4>Templates Ready for Deployment</h4>
+          {availableTemplates.map((template) => (
+            <div
+              key={template.name}
               style={{
                 ...styles.templateItem,
-                backgroundColor: selectedTemplates.some(t => t.value === template.value) 
-                  ? '#f0f0f0'  // Highlight selected templates
-                  : 'transparent',
-                cursor: 'pointer'
+                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                cursor: 'pointer',
               }}
-              onClick={() => toggleTemplate(template)}
+              onClick={() => handleSelectTemplate(template.name)}
             >
-              <span>{template.label}</span>
+              <span>{template.name}</span>
+              {selectedTemplate === template.name && <span>✓</span>}
             </div>
           ))}
         </div>
 
-        {/* Action Buttons - Only shown when templates are selected */}
-        {selectedTemplates.length > 0 && (
+        {selectedTemplate && (
           <div style={styles.buttonGroup}>
-            {/* Deploy Button */}
             <button
-              onClick={handleAddTemplates}
               style={{
                 ...styles.button,
                 backgroundColor: '#28a745',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
               }}
+              onClick={handleDeploy}
             >
               <PlusCircleIcon style={styles.icon} />
-              Deploy Templates ({selectedTemplates.length})
-            </button>
-            {/* Delete Button */}
-            <button
-              onClick={handleDeleteTemplates}
-              style={{
-                ...styles.button,
-                backgroundColor: '#dc3545',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <TrashIcon style={styles.icon} />
-              Delete Templates ({selectedTemplates.length})
+              Deploy Template
             </button>
           </div>
         )}
       </div>
 
-      {/* Deployed Environments Display Section */}
       <div style={styles.container}>
-        <h3 style={styles.header}>Deployed Environments</h3>
-        {environments.length === 0 ? (
-          // Show message when no environments are deployed
-          <p style={styles.emptyState}>No environments currently deployed</p>
+        <h3 style={styles.header}>Deployed Templates</h3>
+        {deployedTemplates.length === 0 ? (
+          <p style={styles.emptyState}>No templates have been deployed yet.</p>
         ) : (
-          // List of deployed environments
-          <div style={styles.environmentList}>
-            {environments.map((env) => (
-              <div key={env.id} style={styles.environmentCard}>
-                <div style={styles.environmentInfo}>
-                  <span style={styles.environmentName}>{env.name}</span>
-                  <span style={styles.environmentType}>{env.type}</span>
-                  {/* Status badge with dynamic color based on status */}
-                  <span style={{
-                    ...styles.status,
-                    backgroundColor: getStatusColor(env.status)
-                  }}>
-                    {env.status}
-                  </span>
-                  <span style={styles.deployTime}>
-                    {new Date(env.deployedAt).toLocaleString()}
-                  </span>
-                </div>
+          <div style={styles.deployedTemplateList}>
+            {deployedTemplates.map((deployed) => (
+              <div key={deployed.id} style={styles.deployedTemplateCard}>
+                <span style={styles.deployedTemplateName}>{deployed.templateName}</span>
+                <span style={styles.deployedAt}>Created: {deployed.deployedAt.toLocaleString()}</span>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div style={styles.container}>
+        <h3 style={styles.header}>Deployed Machines</h3>
+        {vms.length === 0 ? (
+          <p style={styles.emptyState}>No virtual machines currently deployed.</p>
+        ) : (
+          <div>
+            <div style={styles.environmentList}>
+              {vms.map((vm) => (
+                <div
+                  key={vm.vmid}
+                  style={{
+                    ...styles.environmentCard,
+                    backgroundColor: selectedVmIds.has(vm.vmid) ? '#e9ecef' : '#f8f9fa',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleSelectVm(vm.vmid)}
+                >
+                  <div style={styles.environmentInfo}>
+                    <input
+                      type="checkbox"
+                      checked={selectedVmIds.has(vm.vmid)}
+                      onChange={() => handleSelectVm(vm.vmid)}
+                    />
+                    <span style={styles.environmentName}>{vm.name}</span>
+                    <span style={styles.environmentNode}>({vm.node})</span>
+                    <span style={{ ...styles.status, backgroundColor: getStatusColor(vm.status) }}>
+                      {vm.status}
+                    </span>
+                    <span style={styles.vmId}>VM ID: {vm.vmid}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {selectedVmIds.size > 0 && (
+              <div style={styles.buttonGroup}>
+                <button
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#007bff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                  onClick={handleStartVMs}
+                >
+                  <PlayIcon style={styles.icon} />
+                  Start Selected
+                </button>
+                <button
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#dc3545',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                  onClick={handleStopVMs}
+                >
+                  <StopIcon style={styles.icon} />
+                  Stop Selected
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -212,9 +290,7 @@ const TemplateManager: React.FC = () => {
   );
 };
 
-// Styles object containing all component styles
-const styles = {
-  // Container style for main sections
+const styles: { [key: string]: CSSProperties } = {
   container: {
     backgroundColor: 'white',
     padding: '20px',
@@ -222,20 +298,17 @@ const styles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     marginBottom: '20px',
   },
-  // Header styling
   header: {
     color: '#333',
     marginBottom: '20px',
     fontSize: '18px',
   },
-  // Button group container
   buttonGroup: {
     display: 'flex',
     gap: '10px',
     marginTop: '20px',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
-  // Base button styling
   button: {
     padding: '10px 20px',
     border: 'none',
@@ -243,84 +316,92 @@ const styles = {
     color: 'white',
     cursor: 'pointer',
     fontSize: '14px',
-    transition: 'all 0.2s',
-    '&:hover': {
-      opacity: 0.9,
-    },
   },
-  // Template list container
   templateList: {
     marginTop: '20px',
   },
-  // Individual template item styling
   templateItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '12px',
     borderBottom: '1px solid #eee',
-    transition: 'background-color 0.2s',
-    '&:hover': {
-      backgroundColor: '#f5f5f5',
-    },
-    '&:last-child': {
-      borderBottom: 'none',
-    },
   },
-  // Icon styling for buttons
   icon: {
     width: '20px',
     height: '20px',
   },
-  // Environment list container
   environmentList: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '10px',
+    marginTop: '20px',
   },
-  // Individual environment card styling
   environmentCard: {
     padding: '12px',
     borderRadius: '6px',
     backgroundColor: '#f8f9fa',
     border: '1px solid #eee',
+    display: 'flex',
+    alignItems: 'center',
   },
-  // Environment information container
   environmentInfo: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
+    flex: 1,
   },
-  // Environment name styling
   environmentName: {
     flex: 1,
     fontSize: '14px',
     fontWeight: '500' as const,
   },
-  // Environment type label styling
-  environmentType: {
+  environmentNode: {
     color: '#666',
-    fontSize: '14px',
+    fontSize: '12px',
   },
-  // Status badge styling
   status: {
     padding: '4px 8px',
     borderRadius: '12px',
     fontSize: '12px',
     color: 'white',
+    minWidth: '70px',
+    textAlign: 'center' as const,
   },
-  // Deployment time styling
-  deployTime: {
-    color: '#666',
+  vmId: {
+    color: '#888',
     fontSize: '12px',
   },
-  // Empty state message styling
   emptyState: {
     textAlign: 'center' as const,
     color: '#666',
     fontStyle: 'italic' as const,
     margin: '20px 0',
   },
+  deployedTemplateList: {
+    marginTop: '20px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  deployedTemplateCard: {
+    padding: '12px',
+    borderRadius: '6px',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #eee',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  deployedTemplateName: {
+    fontSize: '14px',
+    fontWeight: '500' as const,
+    flex: 1,
+  },
+  deployedAt: {
+    color: '#666',
+    fontSize: '12px',
+  },
 };
 
-export default TemplateManager; 
+export default TemplateManager;

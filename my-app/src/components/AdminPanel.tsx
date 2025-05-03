@@ -203,6 +203,8 @@ const AdminPanel: React.FC = () => {
       <div style={styles.mainContent}>
         <Outlet />
       </div>
+      {/* insert footer */}
+      <div style={styles.footer}>Property of Cal Poly Pomona Student Data Center</div>
     </div>
   );
 };
