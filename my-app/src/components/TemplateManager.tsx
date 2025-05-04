@@ -96,7 +96,7 @@ const TemplateManager: React.FC = () => {
     try {
       console.log('Deploying template:', selectedTemplate);
   
-      const response = await fetch('/api/proxmox/template/clone', {
+      const response = await fetch('/api/proxmox/templates/clone', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
