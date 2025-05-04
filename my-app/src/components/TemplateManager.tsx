@@ -106,8 +106,16 @@ const TemplateManager: React.FC = () => {
       });
   
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Backend error: ${errorText}`);
+        try {
+          const errorJson = await response.json();
+          const errorMessage = errorJson.error || 'Unknown error';
+          const details = errorJson.details ? ` (${errorJson.details})` : '';
+          throw new Error(`Backend error: ${errorMessage}${details}`);
+        } catch (jsonErr) {
+          // fallback if response is not JSON
+          const fallbackText = await response.text();
+          throw new Error(`Backend error: ${fallbackText}`);
+        }
       }
   
       const data = await response.json(); 
