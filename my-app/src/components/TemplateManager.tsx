@@ -130,7 +130,6 @@ const TemplateManager: React.FC = () => {
         const data: AllDeployedPodsApiResponse = await response.json();
         console.log("fetchAllDeployedPods - Response Data:", data);
         setAllDeployedTemplates(data.templates);
-        console.log("fetchAllDeployedPods - allDeployedTemplates after setting:", allDeployedTemplates);
         setLoadingAllDeployed(false);
       } catch (e: any) {
         console.error("fetchAllDeployedPods - Error:", e);
@@ -145,23 +144,22 @@ const TemplateManager: React.FC = () => {
   // fetches pods ONLY belonging to user
   useEffect(() => {
     const fetchUserDeployedPods = async () => {
-      console.log("fetchAllDeployedPods - Fetching...");
+      console.log("fetchUserDeployedPods - Fetching...");
       setLoadingUserDeployed(true);
       try {
         const response = await fetch('/api/proxmox/pods');
-        console.log("fetchAllDeployedPods - Response Status:", response.status);
+        console.log("fetchUserDeployedPods - Response Status:", response.status);
         if (!response.ok) {
           const text = await response.text();
-          console.error("fetchAllDeployedPods - Error Text:", text);
+          console.error("fetchUserDeployedPods - Error Text:", text);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: UserDeployedPodsApiResponse = await response.json();
-        console.log("fetchAllDeployedPods - Response Data:", data);
+        console.log("fetchUserDeployedPods - Response Data:", data);
         setUserDeployedTemplates(data.templates);
-        console.log("fetchAllDeployedPods - allDeployedTemplates after setting:", userDeployedTemplates);
         setLoadingUserDeployed(false);
       } catch (e: any) {
-        console.error("fetchAllDeployedPods - Error:", e);
+        console.error("fetchUserDeployedPods - Error:", e);
         setErrorUserDeployed(e.message);
         setLoadingUserDeployed(false);
       }
@@ -325,10 +323,12 @@ const TemplateManager: React.FC = () => {
   };
 
   if (loadingAvailableTemplates || loadingVMs || loadingAllDeployed || loadingUserDeployed) {
+    console.log("Loading...!");
     return <p>Loading data...</p>;
   }
 
   if (errorAvailableTemplates || errorVMs || errorAllDeployed) {
+    console.log("Error occured!");
     return <p>Error fetching data: {errorAvailableTemplates || errorVMs || errorAllDeployed || errorUserDeployed}</p>;
   }
 
@@ -376,22 +376,26 @@ const TemplateManager: React.FC = () => {
       {/* Deployed Templates Belonging to User */}
       <div style={styles.container}>
         <h3 style={styles.header}>User Deployed Templates</h3>
-        <div style={styles.templateList}>
-          {userDeployedTemplates.map((template) => (
-            <div
-              key={template.name}
-              style={{
-                ...styles.templateItem,
-                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
-                cursor: 'pointer',
-              }}
-              onClick={() => handleSelectTemplate(template.name)}
-            >
-              <span>{template.name}</span>
-              {selectedTemplate === template.name && <span>✓</span>}
-            </div>
-          ))}
-        </div>
+        {userDeployedTemplates.length === 0 ? (
+          <p>No templates have been created yet.</p>
+        ) : (
+          <div style={styles.templateList}>
+            {userDeployedTemplates.map((template) => (
+              <div
+                key={template.name}
+                style={{
+                  ...styles.templateItem,
+                  backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleSelectTemplate(template.name)}
+              >
+                <span>{template.name}</span>
+                {selectedTemplate === template.name && <span>✓</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {selectedTemplate && (
           <div style={styles.buttonGroup}>
@@ -415,6 +419,9 @@ const TemplateManager: React.FC = () => {
       {/* All Deployed Templates */}
       <div style={styles.container}>
         <h3 style={styles.header}>All Deployed Templates</h3>
+        {allDeployedTemplates.length === 0 ? (
+          <p>No templates have been created yet.</p>
+        ) : (
         <div style={styles.templateList}>
           {allDeployedTemplates.map((template) => (
             <div
@@ -431,6 +438,7 @@ const TemplateManager: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
 
         {selectedTemplate && (
           <div style={styles.buttonGroup}>
@@ -450,6 +458,7 @@ const TemplateManager: React.FC = () => {
           </div>
         )}
       </div>
+      
 
 
       <div style={styles.container}>
