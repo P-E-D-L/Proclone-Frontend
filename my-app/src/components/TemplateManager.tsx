@@ -156,7 +156,7 @@ const TemplateManager: React.FC = () => {
         }
         const data: UserDeployedPodsApiResponse = await response.json();
         console.log("fetchUserDeployedPods - Response Data:", data);
-        setUserDeployedTemplates(data.templates);
+        setUserDeployedTemplates(data.templates === null ? [] : data.templates);
         setLoadingUserDeployed(false);
       } catch (e: any) {
         console.error("fetchUserDeployedPods - Error:", e);
