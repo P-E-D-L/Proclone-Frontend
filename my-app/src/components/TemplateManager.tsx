@@ -148,31 +148,65 @@ const TemplateManager: React.FC = () => {
     setSelectedVmIds(newSelection);
   };
 
-  const handleStartVMs = () => {
+  const handleStartVMs = async () => {
     if (selectedVmIds.size > 0) {
-      console.log('Starting VMs:', Array.from(selectedVmIds));
-      alert(`Starting VMs with IDs: ${Array.from(selectedVmIds).join(', ')} (NOT IMPLEMENTED - POST /api/admin/proxmox/virtualmachines/{vmid}/start)`);
-      setVms(prev =>
-        prev.map(vm =>
-          selectedVmIds.has(vm.vmid) && vm.status === 'stopped' ? { ...vm, status: 'running' } : vm
-        )
-      );
-      setSelectedVmIds(new Set());
+      try {
+        const startPromises = Array.from(selectedVmIds).map(async (vmid) => {
+          const response = await fetch(`/api/admin/proxmox/virtualmachines/${vmid}/start`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to start VM ${vmid}`);
+          }
+        });
+
+        await Promise.all(startPromises);
+        
+        // Update UI state
+        setVms(prev =>
+          prev.map(vm =>
+            selectedVmIds.has(vm.vmid) && vm.status === 'stopped' ? { ...vm, status: 'running' } : vm
+          )
+        );
+        setSelectedVmIds(new Set());
+      } catch (error) {
+        console.error('Error starting VMs:', error);
+        alert(`Failed to start VMs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } else {
       alert('Please select one or more VMs to start.');
     }
   };
 
-  const handleStopVMs = () => {
+  const handleStopVMs = async () => {
     if (selectedVmIds.size > 0) {
-      console.log('Stopping VMs:', Array.from(selectedVmIds));
-      alert(`Stopping VMs with IDs: ${Array.from(selectedVmIds).join(', ')} (NOT IMPLEMENTED - POST /api/admin/proxmox/virtualmachines/{vmid}/shutdown)`);
-      setVms(prev =>
-        prev.map(vm =>
-          selectedVmIds.has(vm.vmid) && vm.status === 'running' ? { ...vm, status: 'stopped' } : vm
-        )
-      );
-      setSelectedVmIds(new Set());
+      try {
+        const stopPromises = Array.from(selectedVmIds).map(async (vmid) => {
+          const response = await fetch(`/api/admin/proxmox/virtualmachines/${vmid}/shutdown`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to stop VM ${vmid}`);
+          }
+        });
+
+        await Promise.all(stopPromises);
+        
+        // Update UI state
+        setVms(prev =>
+          prev.map(vm =>
+            selectedVmIds.has(vm.vmid) && vm.status === 'running' ? { ...vm, status: 'stopped' } : vm
+          )
+        );
+        setSelectedVmIds(new Set());
+      } catch (error) {
+        console.error('Error stopping VMs:', error);
+        alert(`Failed to stop VMs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } else {
       alert('Please select one or more VMs to stop.');
     }
