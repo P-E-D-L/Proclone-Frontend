@@ -9,11 +9,10 @@ interface ApiResponse {
   templates: Template[];
 }
 
-interface DeployedTemplate {
+interface Pod {
   id: string;
-  templateName: string;
+  podName: string;
   deployedAt: Date;
-  status: 'running' | 'stopped' | 'failed'; // You might need to adjust this based on your actual deployed template status
 }
 
 interface VM {
@@ -31,7 +30,7 @@ interface VMsApiResponse {
 const TemplateManager: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [deployedTemplates, setDeployedTemplates] = useState<DeployedTemplate[]>([]);
+  const [Pods, setPods] = useState<Pod[]>([]);
   const [vms, setVms] = useState<VM[]>([]);
   const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
   const [loadingAvailableTemplates, setLoadingAvailableTemplates] = useState<boolean>(true);
@@ -84,27 +83,50 @@ const TemplateManager: React.FC = () => {
     fetchVMs();
   }, []);
 
-  const handleSelectTemplate = (templateName: string) => {
-    setSelectedTemplate(templateName);
+  const handleSelectTemplate = (podName: string) => {
+    setSelectedTemplate(podName);
   };
 
-  const handleDeploy = () => {
-    if (selectedTemplate) {
-      console.log('Deploying template:', selectedTemplate);
-      alert(`Deploying template: ${selectedTemplate} (NOT IMPLEMENTED - Should trigger a backend call to deploy)`);
-
-      // this is just for simulation to test deployment appearance until implemented
-      const newDeployedTemplate: DeployedTemplate = {
-        id: Math.random().toString(36).substr(2, 9),
-        templateName: selectedTemplate,
-        deployedAt: new Date(),
-        status: 'running', // Initial status
-      };
-
-      setDeployedTemplates(prev => [...prev, newDeployedTemplate]);
-      setSelectedTemplate(null);
-    } else {
+  const handleDeploy = async () => {
+    if (!selectedTemplate) {
       alert('Please select a template to deploy.');
+      return;
+    }
+  
+    try {
+      console.log('Deploying template:', selectedTemplate);
+  
+      const response = await fetch('/api/proxmox/template/clone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ template_name: selectedTemplate }),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Backend error: ${errorText}`);
+      }
+  
+      const data = await response.json(); 
+  
+      // Add the newly deployed template to the UI
+      const newPod: Pod = {
+        id: data.pod_name,
+        podName: data.pod_name,
+        deployedAt: new Date(),
+      };
+  
+      setPods(prev => [...prev, newPod]);
+      setSelectedTemplate(null);
+  
+    } catch (error) {
+      console.error('Deployment failed:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      alert(`Failed to deploy template: ${errorMessage}`);
     }
   };
 
@@ -208,13 +230,13 @@ const TemplateManager: React.FC = () => {
 
       <div style={styles.container}>
         <h3 style={styles.header}>Deployed Templates</h3>
-        {deployedTemplates.length === 0 ? (
+        {Pods.length === 0 ? (
           <p style={styles.emptyState}>No templates have been deployed yet.</p>
         ) : (
-          <div style={styles.deployedTemplateList}>
-            {deployedTemplates.map((deployed) => (
-              <div key={deployed.id} style={styles.deployedTemplateCard}>
-                <span style={styles.deployedTemplateName}>{deployed.templateName}</span>
+          <div style={styles.PodList}>
+            {Pods.map((deployed) => (
+              <div key={deployed.id} style={styles.PodCard}>
+                <span style={styles.PodName}>{deployed.podName}</span>
                 <span style={styles.deployedAt}>Created: {deployed.deployedAt.toLocaleString()}</span>
               </div>
             ))}
@@ -380,13 +402,13 @@ const styles: { [key: string]: CSSProperties } = {
     fontStyle: 'italic' as const,
     margin: '20px 0',
   },
-  deployedTemplateList: {
+  PodList: {
     marginTop: '20px',
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '10px',
   },
-  deployedTemplateCard: {
+  PodCard: {
     padding: '12px',
     borderRadius: '6px',
     backgroundColor: '#f8f9fa',
@@ -395,7 +417,7 @@ const styles: { [key: string]: CSSProperties } = {
     alignItems: 'center',
     gap: '12px',
   },
-  deployedTemplateName: {
+  PodName: {
     fontSize: '14px',
     fontWeight: '500' as const,
     flex: 1,
