@@ -76,7 +76,7 @@ const TemplateManager: React.FC = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: TemplateApiResponse = await response.json();
-        setAvailableTemplates(data.templates);
+        setAvailableTemplates(data.templates === null ? [] : data.templates);
         setLoadingAvailableTemplates(false);
       } catch (e: any) {
         setErrorAvailableTemplates(e.message);
@@ -129,7 +129,7 @@ const TemplateManager: React.FC = () => {
         }
         const data: AllDeployedPodsApiResponse = await response.json();
         console.log("fetchAllDeployedPods - Response Data:", data);
-        setAllDeployedTemplates(data.templates);
+        setAllDeployedTemplates(data.templates === null ? [] : data.templates);
         setLoadingAllDeployed(false);
       } catch (e: any) {
         console.error("fetchAllDeployedPods - Error:", e);
