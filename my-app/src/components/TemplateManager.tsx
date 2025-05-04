@@ -21,14 +21,8 @@ interface UserDeployedPodsApiResponse {
   templates: DeployedPod[];
 }
 
-interface DeployedTemplate {
-  name: string;
-  deployedAt: Date;
-}
-
 interface Pod {
-  id: string;
-  podName: string;
+  name: string;
   deployedAt: Date;
 }
 
@@ -46,9 +40,8 @@ interface VMsApiResponse {
 
 const TemplateManager: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
-  const [deployedTemplates, setDeployedTemplates] = useState<DeployedTemplate[]>([]);
+  const [pods, setPods] = useState<Pod[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [Pods, setPods] = useState<Pod[]>([]);
   const [vms, setVms] = useState<VM[]>([]);
   const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
   const [loadingAvailableTemplates, setLoadingAvailableTemplates] = useState<boolean>(true);
@@ -57,12 +50,12 @@ const TemplateManager: React.FC = () => {
   const [errorVMs, setErrorVMs] = useState<string | null>(null);
 
   // NEW: to display all pods
-  const [allDeployedTemplates, setAllDeployedTemplates] = useState<DeployedPod[]>([]);
+  const [allpods, setAllpods] = useState<DeployedPod[]>([]);
   const [loadingAllDeployed, setLoadingAllDeployed] = useState<boolean>(true);
   const [errorAllDeployed, setErrorAllDeployed] = useState<string | null>(null);
 
   // NEW: to display user pods only
-  const [userDeployedTemplates, setUserDeployedTemplates] = useState<DeployedPod[]>([]);
+  const [userpods, setUserpods] = useState<DeployedPod[]>([]);
   const [loadingUserDeployed, setLoadingUserDeployed] = useState<boolean>(true);
   const [errorUserDeployed, setErrorUserDeployed] = useState<string | null>(null);
 
@@ -129,7 +122,7 @@ const TemplateManager: React.FC = () => {
         }
         const data: AllDeployedPodsApiResponse = await response.json();
         console.log("fetchAllDeployedPods - Response Data:", data);
-        setAllDeployedTemplates(data.templates === null ? [] : data.templates);
+        setAllpods(data.templates === null ? [] : data.templates);
         setLoadingAllDeployed(false);
       } catch (e: any) {
         console.error("fetchAllDeployedPods - Error:", e);
@@ -156,7 +149,7 @@ const TemplateManager: React.FC = () => {
         }
         const data: UserDeployedPodsApiResponse = await response.json();
         console.log("fetchUserDeployedPods - Response Data:", data);
-        setUserDeployedTemplates(data.templates === null ? [] : data.templates);
+        setUserpods(data.templates === null ? [] : data.templates);
         setLoadingUserDeployed(false);
       } catch (e: any) {
         console.error("fetchUserDeployedPods - Error:", e);
@@ -206,19 +199,18 @@ const TemplateManager: React.FC = () => {
       const data = await response.json();
 
       // Update the list of deployed templates
-      setDeployedTemplates(prev => [...prev, { name: selectedTemplate, deployedAt: new Date() }]);
+      setPods(prev => [...prev, { name: selectedTemplate, deployedAt: new Date() }]);
 
       // Add the newly deployed pod to the UI (assuming your backend returns pod information)
       const newPod: Pod = {
-        id: data.pod_name,
-        podName: data.pod_name,
+        name: data.pod_name,
         deployedAt: new Date(),
       };
 
       setPods(prev => [...prev, newPod]);
       setSelectedTemplate(null);
 
-      // fetchAllDeployedTemplates();
+      // fetchAllpods();
 
     } catch (error) {
       console.error('Deployment failed:', error);
@@ -286,14 +278,18 @@ const TemplateManager: React.FC = () => {
   const handleStartVMs = async () => {
     if (selectedVmIds.size > 0) {
       try {
-        const startPromises = Array.from(selectedVmIds).map(async (vmid) => {
-          const response = await fetch(`/api/admin/proxmox/virtualmachines/${vmid}/start`, {
+        const startPromises = Array.from(selectedVmIds).map(async (VmId) => {
+          const response = await fetch(`/api/admin/proxmox/virtualmachines/start`, {
             method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
             credentials: 'include',
+            body: JSON.stringify({ vmid: VmId }),
           });
           
           if (!response.ok) {
-            throw new Error(`Failed to start VM ${vmid}`);
+            throw new Error(`Failed to start VM ${VmId}`);
           }
         });
 
@@ -318,14 +314,18 @@ const TemplateManager: React.FC = () => {
   const handleStopVMs = async () => {
     if (selectedVmIds.size > 0) {
       try {
-        const stopPromises = Array.from(selectedVmIds).map(async (vmid) => {
-          const response = await fetch(`/api/admin/proxmox/virtualmachines/${vmid}/shutdown`, {
+        const stopPromises = Array.from(selectedVmIds).map(async (VmId) => {
+          const response = await fetch(`/api/admin/proxmox/virtualmachines/shutdown`, {
             method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
             credentials: 'include',
+            body: JSON.stringify({ vmid: VmId }),
           });
           
           if (!response.ok) {
-            throw new Error(`Failed to stop VM ${vmid}`);
+            throw new Error(`Failed to stop VM ${VmId}`);
           }
         });
 
@@ -409,12 +409,12 @@ const TemplateManager: React.FC = () => {
 
       {/* Deployed Templates Belonging to User */}
       <div style={styles.container}>
-        <h3 style={styles.header}>User Deployed Templates</h3>
-        {userDeployedTemplates === null || userDeployedTemplates.length === 0 ? (
-          <p>No templates have been created yet.</p>
+        <h3 style={styles.header}>Your Deployed Pods</h3>
+        {userpods === null || userpods.length === 0 ? (
+          <p>No pods have been deployed yet.</p>
         ) : (
           <div style={styles.templateList}>
-            {userDeployedTemplates.map((template) => (
+            {userpods.map((template) => (
               <div
                 key={template.name}
                 style={{
@@ -452,12 +452,12 @@ const TemplateManager: React.FC = () => {
 
       {/* All Deployed Templates */}
       <div style={styles.container}>
-        <h3 style={styles.header}>All Deployed Templates</h3>
-        {allDeployedTemplates === null || allDeployedTemplates.length === 0 ? (
-          <p>No templates have been created yet.</p>
+        <h3 style={styles.header}>All Deployed Pods</h3>
+        {allpods === null || allpods.length === 0 ? (
+          <p>No pods have been deployed yet.</p>
         ) : (
         <div style={styles.templateList}>
-          {allDeployedTemplates.map((template) => (
+          {allpods.map((template) => (
             <div
               key={template.name}
               style={{
@@ -496,7 +496,7 @@ const TemplateManager: React.FC = () => {
 
 
       <div style={styles.container}>
-        <h3 style={styles.header}>Deployed Machines</h3>
+        <h3 style={styles.header}>Virtual Machines</h3>
         {vms.length === 0 ? (
           <p style={styles.emptyState}>No virtual machines currently deployed.</p>
         ) : (
@@ -677,13 +677,7 @@ const styles: { [key: string]: CSSProperties } = {
     color: '#666',
     fontSize: '12px',
   },
-  deployedTemplateList: {
-    marginTop: '20px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '10px',
-  },
-  deployedTemplateItem: {
+  PodItem: {
     padding: '12px',
     borderRadius: '6px',
     backgroundColor: '#f8f9fa',

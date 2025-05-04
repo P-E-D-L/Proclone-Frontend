@@ -158,21 +158,6 @@ const Menu: React.FC = () => {
  * endpoint calls moved to template manager
  */
 const AdminPanel: React.FC = () => {
-
-  useEffect(() => {
-    fetch('/api/admin/proxmox/pods/all', {
-      method: 'GET',
-      credentials: 'include',
-    })
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/proxmox/pods', {
-      method: 'GET',
-      credentials: 'include',
-    })
-  }, []);
-
   return (
     <div style={styles.dashboardContainer}>
       <Menu />
