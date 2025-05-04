@@ -1,12 +1,29 @@
 import React, { CSSProperties, useState, useEffect } from 'react';
-import { PlusCircleIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline';
+import { MinusCircleIcon, PlusCircleIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline';
 
 interface Template {
   name: string;
 }
 
-interface ApiResponse {
+interface TemplateApiResponse {
   templates: Template[];
+}
+
+interface DeployedPod {
+  name: string;
+}
+
+interface AllDeployedPodsApiResponse {
+  templates: DeployedPod[];
+}
+
+interface UserDeployedPodsApiResponse {
+  templates: DeployedPod[];
+}
+
+interface DeployedTemplate {
+  name: string;
+  deployedAt: Date;
 }
 
 interface Pod {
@@ -29,6 +46,7 @@ interface VMsApiResponse {
 
 const TemplateManager: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
+  const [deployedTemplates, setDeployedTemplates] = useState<DeployedTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [Pods, setPods] = useState<Pod[]>([]);
   const [vms, setVms] = useState<VM[]>([]);
@@ -38,6 +56,18 @@ const TemplateManager: React.FC = () => {
   const [loadingVMs, setLoadingVMs] = useState<boolean>(true);
   const [errorVMs, setErrorVMs] = useState<string | null>(null);
 
+  // NEW: to display all pods
+  const [allDeployedTemplates, setAllDeployedTemplates] = useState<DeployedPod[]>([]);
+  const [loadingAllDeployed, setLoadingAllDeployed] = useState<boolean>(true);
+  const [errorAllDeployed, setErrorAllDeployed] = useState<string | null>(null);
+
+  // NEW: to display user pods only
+  const [userDeployedTemplates, setUserDeployedTemplates] = useState<DeployedPod[]>([]);
+  const [loadingUserDeployed, setLoadingUserDeployed] = useState<boolean>(true);
+  const [errorUserDeployed, setErrorUserDeployed] = useState<string | null>(null);
+
+  
+  // get available templates
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
@@ -45,7 +75,7 @@ const TemplateManager: React.FC = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data: ApiResponse = await response.json();
+        const data: TemplateApiResponse = await response.json();
         setAvailableTemplates(data.templates);
         setLoadingAvailableTemplates(false);
       } catch (e: any) {
@@ -57,6 +87,7 @@ const TemplateManager: React.FC = () => {
     fetchTemplates();
   }, []);
 
+  // get all VMs to list
   useEffect(() => {
     const fetchVMs = async () => {
       try {
@@ -83,8 +114,64 @@ const TemplateManager: React.FC = () => {
     fetchVMs();
   }, []);
 
-  const handleSelectTemplate = (podName: string) => {
-    setSelectedTemplate(podName);
+  // fetches all deployed templates
+  useEffect(() => {
+    const fetchAllDeployedPods = async () => {
+      console.log("fetchAllDeployedPods - Fetching...");
+      setLoadingAllDeployed(true);
+      try {
+        const response = await fetch('/api/admin/proxmox/pods/all');
+        console.log("fetchAllDeployedPods - Response Status:", response.status);
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("fetchAllDeployedPods - Error Text:", text);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: AllDeployedPodsApiResponse = await response.json();
+        console.log("fetchAllDeployedPods - Response Data:", data);
+        setAllDeployedTemplates(data.templates);
+        console.log("fetchAllDeployedPods - allDeployedTemplates after setting:", allDeployedTemplates);
+        setLoadingAllDeployed(false);
+      } catch (e: any) {
+        console.error("fetchAllDeployedPods - Error:", e);
+        setErrorAllDeployed(e.message);
+        setLoadingAllDeployed(false);
+      }
+    };
+
+    fetchAllDeployedPods();
+  }, []);
+
+  // fetches pods ONLY belonging to user
+  useEffect(() => {
+    const fetchUserDeployedPods = async () => {
+      console.log("fetchAllDeployedPods - Fetching...");
+      setLoadingUserDeployed(true);
+      try {
+        const response = await fetch('/api/proxmox/pods');
+        console.log("fetchAllDeployedPods - Response Status:", response.status);
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("fetchAllDeployedPods - Error Text:", text);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: UserDeployedPodsApiResponse = await response.json();
+        console.log("fetchAllDeployedPods - Response Data:", data);
+        setUserDeployedTemplates(data.templates);
+        console.log("fetchAllDeployedPods - allDeployedTemplates after setting:", userDeployedTemplates);
+        setLoadingUserDeployed(false);
+      } catch (e: any) {
+        console.error("fetchAllDeployedPods - Error:", e);
+        setErrorUserDeployed(e.message);
+        setLoadingUserDeployed(false);
+      }
+    };
+
+    fetchUserDeployedPods();
+  }, []);
+
+  const handleSelectTemplate = (templateName: string) => {
+    setSelectedTemplate(templateName);
   };
 
   const handleDeploy = async () => {
@@ -92,10 +179,10 @@ const TemplateManager: React.FC = () => {
       alert('Please select a template to deploy.');
       return;
     }
-  
+
     try {
       console.log('Deploying template:', selectedTemplate);
-  
+
       const response = await fetch('/api/proxmox/templates/clone', {
         method: 'POST',
         headers: {
@@ -104,10 +191,10 @@ const TemplateManager: React.FC = () => {
         credentials: 'include',
         body: JSON.stringify({ template_name: selectedTemplate }),
       });
-  
+
       if (!response.ok) {
         const text = await response.text();
-      
+
         try {
           const errorJson = JSON.parse(text);
           const errorMessage = errorJson.error || 'Unknown error';
@@ -117,24 +204,74 @@ const TemplateManager: React.FC = () => {
           throw new Error(`Backend error: ${text}`);
         }
       }
-  
-      const data = await response.json(); 
-  
-      // Add the newly deployed template to the UI
+
+      const data = await response.json();
+
+      // Update the list of deployed templates
+      setDeployedTemplates(prev => [...prev, { name: selectedTemplate, deployedAt: new Date() }]);
+
+      // Add the newly deployed pod to the UI (assuming your backend returns pod information)
       const newPod: Pod = {
         id: data.pod_name,
         podName: data.pod_name,
         deployedAt: new Date(),
       };
-  
+
       setPods(prev => [...prev, newPod]);
       setSelectedTemplate(null);
-  
+
+      // fetchAllDeployedTemplates();
+
     } catch (error) {
       console.error('Deployment failed:', error);
 
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       alert(`Failed to deploy template: ${errorMessage}`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedTemplate) {
+      alert('Please select a template to delete.');
+      return;
+    }
+
+    try {
+      console.log('Deleting template:', selectedTemplate);
+
+      const response = await fetch('/api/proxmox/templates/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ template_name: selectedTemplate }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+
+        try {
+          const errorJson = JSON.parse(text);
+          const errorMessage = errorJson.error || 'Unknown error';
+          const details = errorJson.details ? ` (${errorJson.details})` : '';
+          throw new Error(`Backend error: ${errorMessage}${details}`);
+        } catch (jsonErr) {
+          throw new Error(`Backend error: ${text}`);
+        }
+      }
+
+      const data = await response.json();
+
+      // may want to implement updating list of deployed templates to remove the one just deleted
+
+      setSelectedTemplate(null);
+
+    } catch (error) {
+      console.error('Deletion failed:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      alert(`Failed to delete template: ${errorMessage}`);
     }
   };
 
@@ -187,12 +324,12 @@ const TemplateManager: React.FC = () => {
     }
   };
 
-  if (loadingAvailableTemplates || loadingVMs) {
+  if (loadingAvailableTemplates || loadingVMs || loadingAllDeployed || loadingUserDeployed) {
     return <p>Loading data...</p>;
   }
 
-  if (errorAvailableTemplates || errorVMs) {
-    return <p>Error fetching data: {errorAvailableTemplates || errorVMs}</p>;
+  if (errorAvailableTemplates || errorVMs || errorAllDeployed) {
+    return <p>Error fetching data: {errorAvailableTemplates || errorVMs || errorAllDeployed || errorUserDeployed}</p>;
   }
 
   return (
@@ -236,21 +373,84 @@ const TemplateManager: React.FC = () => {
         )}
       </div>
 
+      {/* Deployed Templates Belonging to User */}
       <div style={styles.container}>
-        <h3 style={styles.header}>Deployed Templates</h3>
-        {Pods.length === 0 ? (
-          <p style={styles.emptyState}>No templates have been deployed yet.</p>
-        ) : (
-          <div style={styles.PodList}>
-            {Pods.map((deployed) => (
-              <div key={deployed.id} style={styles.PodCard}>
-                <span style={styles.PodName}>{deployed.podName}</span>
-                <span style={styles.deployedAt}>Created: {deployed.deployedAt.toLocaleString()}</span>
-              </div>
-            ))}
+        <h3 style={styles.header}>User Deployed Templates</h3>
+        <div style={styles.templateList}>
+          {userDeployedTemplates.map((template) => (
+            <div
+              key={template.name}
+              style={{
+                ...styles.templateItem,
+                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                cursor: 'pointer',
+              }}
+              onClick={() => handleSelectTemplate(template.name)}
+            >
+              <span>{template.name}</span>
+              {selectedTemplate === template.name && <span>✓</span>}
+            </div>
+          ))}
+        </div>
+
+        {selectedTemplate && (
+          <div style={styles.buttonGroup}>
+            <button
+              style={{
+                ...styles.button,
+                backgroundColor: '#dc3545',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onClick={handleDelete}
+            >
+              <MinusCircleIcon style={styles.icon} />
+              Delete Template
+            </button>
           </div>
         )}
       </div>
+
+      {/* All Deployed Templates */}
+      <div style={styles.container}>
+        <h3 style={styles.header}>All Deployed Templates</h3>
+        <div style={styles.templateList}>
+          {allDeployedTemplates.map((template) => (
+            <div
+              key={template.name}
+              style={{
+                ...styles.templateItem,
+                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                cursor: 'pointer',
+              }}
+              onClick={() => handleSelectTemplate(template.name)}
+            >
+              <span>{template.name}</span>
+              {selectedTemplate === template.name && <span>✓</span>}
+            </div>
+          ))}
+        </div>
+
+        {selectedTemplate && (
+          <div style={styles.buttonGroup}>
+            <button
+              style={{
+                ...styles.button,
+                backgroundColor: '#dc3545',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              onClick={handleDelete}
+            >
+              <MinusCircleIcon style={styles.icon} />
+              Delete Template
+            </button>
+          </div>
+        )}
+      </div>
+
 
       <div style={styles.container}>
         <h3 style={styles.header}>Deployed Machines</h3>
@@ -433,6 +633,21 @@ const styles: { [key: string]: CSSProperties } = {
   deployedAt: {
     color: '#666',
     fontSize: '12px',
+  },
+  deployedTemplateList: {
+    marginTop: '20px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  deployedTemplateItem: {
+    padding: '12px',
+    borderRadius: '6px',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #eee',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 };
 
