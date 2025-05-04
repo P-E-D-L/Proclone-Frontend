@@ -376,7 +376,7 @@ const TemplateManager: React.FC = () => {
       {/* Deployed Templates Belonging to User */}
       <div style={styles.container}>
         <h3 style={styles.header}>User Deployed Templates</h3>
-        {userDeployedTemplates.length === 0 ? (
+        {userDeployedTemplates === null || userDeployedTemplates.length === 0 ? (
           <p>No templates have been created yet.</p>
         ) : (
           <div style={styles.templateList}>
@@ -419,7 +419,7 @@ const TemplateManager: React.FC = () => {
       {/* All Deployed Templates */}
       <div style={styles.container}>
         <h3 style={styles.header}>All Deployed Templates</h3>
-        {allDeployedTemplates.length === 0 ? (
+        {allDeployedTemplates === null || allDeployedTemplates.length === 0 ? (
           <p>No templates have been created yet.</p>
         ) : (
         <div style={styles.templateList}>
