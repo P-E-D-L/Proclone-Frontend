@@ -279,13 +279,16 @@ const TemplateManager: React.FC = () => {
     if (selectedVmIds.size > 0) {
       try {
         const startPromises = Array.from(selectedVmIds).map(async (VmId) => {
+          const vm = vms.find(v => v.vmid === VmId);
+          if (!vm) throw new Error(`VM with ID ${VmId} not found`);
+
           const response = await fetch(`/api/admin/proxmox/virtualmachines/start`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             credentials: 'include',
-            body: JSON.stringify({ vmid: VmId }),
+            body: JSON.stringify({ vmid: VmId, node: vm.node }),
           });
           
           if (!response.ok) {
@@ -315,13 +318,16 @@ const TemplateManager: React.FC = () => {
     if (selectedVmIds.size > 0) {
       try {
         const stopPromises = Array.from(selectedVmIds).map(async (VmId) => {
+          const vm = vms.find(v => v.vmid === VmId);
+          if (!vm) throw new Error(`VM with ID ${VmId} not found`);
+
           const response = await fetch(`/api/admin/proxmox/virtualmachines/shutdown`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             credentials: 'include',
-            body: JSON.stringify({ vmid: VmId }),
+            body: JSON.stringify({ vmid: VmId, node: vm.node }),
           });
           
           if (!response.ok) {
