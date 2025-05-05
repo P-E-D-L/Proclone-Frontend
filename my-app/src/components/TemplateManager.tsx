@@ -367,7 +367,7 @@ const TemplateManager: React.FC = () => {
     return <p>Loading data...</p>;
   }
 
-  if (errorAvailableTemplates || errorVMs || errorAllDeployed) {
+  if (errorAvailableTemplates || errorVMs || errorAllDeployed || errorUserDeployed ) {
     console.log("Error occured!");
     return <p>Error fetching data: {errorAvailableTemplates || errorVMs || errorAllDeployed || errorUserDeployed}</p>;
   }
