@@ -41,7 +41,7 @@ interface VMsApiResponse {
 const TemplateManager: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
   const [pods, setPods] = useState<Pod[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedPod, setSelectedPodselectedPod] = useState<string | null>(null);
   const [vms, setVms] = useState<VM[]>([]);
   const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
   const [loadingAvailableTemplates, setLoadingAvailableTemplates] = useState<boolean>(true);
@@ -162,17 +162,17 @@ const TemplateManager: React.FC = () => {
   }, []);
 
   const handleSelectTemplate = (templateName: string) => {
-    setSelectedTemplate(templateName);
+    setSelectedPodselectedPod(templateName);
   };
 
   const handleDeploy = async () => {
-    if (!selectedTemplate) {
+    if (!selectedPod) {
       alert('Please select a template to deploy.');
       return;
     }
 
     try {
-      console.log('Deploying template:', selectedTemplate);
+      console.log('Deploying template:', selectedPod);
 
       const response = await fetch('/api/proxmox/templates/clone', {
         method: 'POST',
@@ -180,7 +180,7 @@ const TemplateManager: React.FC = () => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ template_name: selectedTemplate }),
+        body: JSON.stringify({ template_name: selectedPod }),
       });
 
       if (!response.ok) {
@@ -199,7 +199,7 @@ const TemplateManager: React.FC = () => {
       const data = await response.json();
 
       // Update the list of deployed templates
-      setPods(prev => [...prev, { name: selectedTemplate, deployedAt: new Date() }]);
+      setPods(prev => [...prev, { name: selectedPod, deployedAt: new Date() }]);
 
       // Add the newly deployed pod to the UI (assuming your backend returns pod information)
       const newPod: Pod = {
@@ -208,7 +208,7 @@ const TemplateManager: React.FC = () => {
       };
 
       setPods(prev => [...prev, newPod]);
-      setSelectedTemplate(null);
+      setSelectedPodselectedPod(null);
 
       // fetchAllpods();
 
@@ -221,21 +221,21 @@ const TemplateManager: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedTemplate) {
-      alert('Please select a template to delete.');
+    if (!selectedPod) {
+      alert('Please select a pod to delete.');
       return;
     }
 
     try {
-      console.log('Deleting template:', selectedTemplate);
+      console.log('Deleting pod:', selectedPod);
 
-      const response = await fetch('/api/proxmox/templates/delete', {
+      const response = await fetch('/api/proxmox/pods/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ template_name: selectedTemplate }),
+        body: JSON.stringify({ pod_id: selectedPod }),
       });
 
       if (!response.ok) {
@@ -255,7 +255,7 @@ const TemplateManager: React.FC = () => {
 
       // may want to implement updating list of deployed templates to remove the one just deleted
 
-      setSelectedTemplate(null);
+      setSelectedPodselectedPod(null);
 
     } catch (error) {
       console.error('Deletion failed:', error);
@@ -383,18 +383,18 @@ const TemplateManager: React.FC = () => {
               key={template.name}
               style={{
                 ...styles.templateItem,
-                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                backgroundColor: selectedPod === template.name ? '#f0f0f0' : 'transparent',
                 cursor: 'pointer',
               }}
               onClick={() => handleSelectTemplate(template.name)}
             >
               <span>{template.name}</span>
-              {selectedTemplate === template.name && <span>✓</span>}
+              {selectedPod === template.name && <span>✓</span>}
             </div>
           ))}
         </div>
 
-        {selectedTemplate && (
+        {selectedPod && (
           <div style={styles.buttonGroup}>
             <button
               style={{
@@ -425,19 +425,19 @@ const TemplateManager: React.FC = () => {
                 key={template.name}
                 style={{
                   ...styles.templateItem,
-                  backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                  backgroundColor: selectedPod === template.name ? '#f0f0f0' : 'transparent',
                   cursor: 'pointer',
                 }}
                 onClick={() => handleSelectTemplate(template.name)}
               >
                 <span>{template.name}</span>
-                {selectedTemplate === template.name && <span>✓</span>}
+                {selectedPod === template.name && <span>✓</span>}
               </div>
             ))}
           </div>
         )}
 
-        {selectedTemplate && (
+        {selectedPod && (
           <div style={styles.buttonGroup}>
             <button
               style={{
@@ -468,19 +468,19 @@ const TemplateManager: React.FC = () => {
               key={template.name}
               style={{
                 ...styles.templateItem,
-                backgroundColor: selectedTemplate === template.name ? '#f0f0f0' : 'transparent',
+                backgroundColor: selectedPod === template.name ? '#f0f0f0' : 'transparent',
                 cursor: 'pointer',
               }}
               onClick={() => handleSelectTemplate(template.name)}
             >
               <span>{template.name}</span>
-              {selectedTemplate === template.name && <span>✓</span>}
+              {selectedPod === template.name && <span>✓</span>}
             </div>
           ))}
         </div>
       )}
 
-        {selectedTemplate && (
+        {selectedPod && (
           <div style={styles.buttonGroup}>
             <button
               style={{
