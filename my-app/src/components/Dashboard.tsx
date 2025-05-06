@@ -169,7 +169,7 @@ const Dashboard: React.FC = () => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ template_name: selectedTemplate }),
+        body: JSON.stringify({ pod_id: selectedTemplate }),
       });
 
       if (!response.ok) {
