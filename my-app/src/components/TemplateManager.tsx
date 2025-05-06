@@ -40,8 +40,7 @@ interface VMsApiResponse {
 
 const TemplateManager: React.FC = () => {
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([]);
-  const [pods, setPods] = useState<Pod[]>([]);
-  const [selectedPod, setSelectedPodselectedPod] = useState<string | null>(null);
+  const [selectedPod, setSelectedPod] = useState<string | null>(null);
   const [vms, setVms] = useState<VM[]>([]);
   const [selectedVmIds, setSelectedVmIds] = useState<Set<number>>(new Set());
   const [loadingAvailableTemplates, setLoadingAvailableTemplates] = useState<boolean>(true);
@@ -162,7 +161,7 @@ const TemplateManager: React.FC = () => {
   }, []);
 
   const handleSelectTemplate = (templateName: string) => {
-    setSelectedPodselectedPod(templateName);
+    setSelectedPod(templateName);
   };
 
   const handleDeploy = async () => {
@@ -170,20 +169,18 @@ const TemplateManager: React.FC = () => {
       alert('Please select a template to deploy.');
       return;
     }
-
+  
     const templateToDeploy = selectedPod;
-
-    // assume will work and add to list (hopefully helps prevent user repeatedly spawning pods)
-    const newPod: DeployedPod = { name: `LOADING NEW ${templateToDeploy} POD... `};
-
-    // optimistically update the userpods and allpods state
-    setUserpods(prev => [...prev, newPod]);
-    setAllpods(prev => [...prev, newPod]);
-
-
+    const placeholderName = `LOADING NEW ${templateToDeploy} POD...`;
+    const placeholderPod: DeployedPod = { name: placeholderName };
+  
+    // Optimistically add placeholder
+    setUserpods(prev => [...prev, placeholderPod]);
+    setAllpods(prev => [...prev, placeholderPod]);
+  
     try {
       console.log('Deploying template:', selectedPod);
-
+  
       const response = await fetch('/api/proxmox/templates/clone', {
         method: 'POST',
         headers: {
@@ -192,10 +189,10 @@ const TemplateManager: React.FC = () => {
         credentials: 'include',
         body: JSON.stringify({ template_name: selectedPod }),
       });
-
+  
       if (!response.ok) {
         const text = await response.text();
-
+  
         try {
           const errorJson = JSON.parse(text);
           const errorMessage = errorJson.error || 'Unknown error';
@@ -205,28 +202,38 @@ const TemplateManager: React.FC = () => {
           throw new Error(`Backend error: ${text}`);
         }
       }
-
+  
       const data = await response.json();
-
-      // Update the list of deployed templates
-      setPods(prev => [...prev, { name: selectedPod, deployedAt: new Date() }]);
-
-      // Add the newly deployed pod to the UI (assuming your backend returns pod information)
-      const newPod: Pod = {
-        name: data.pod_name,
-        deployedAt: new Date(),
-      };
-
-      setPods(prev => [...prev, newPod]);
-      setSelectedPodselectedPod(null);
-
-      // fetchAllpods();
-
+  
+      if (data.success === 1) {
+        const updatedPod: Pod = {
+          name: data.pod_name,
+          deployedAt: new Date(),
+        };
+  
+        // Replace placeholder in userpods
+        setUserpods(prev =>
+          prev.map(p => (p.name === placeholderName ? updatedPod : p))
+        );
+  
+        // Replace placeholder in allpods
+        setAllpods(prev =>
+          prev.map(p => (p.name === placeholderName ? updatedPod : p))
+        );
+      } else {
+        throw new Error('Pod deployment failed (success != 1)');
+      }
+  
+      setSelectedPod(null);
     } catch (error) {
       console.error('Deployment failed:', error);
-
+  
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       alert(`Failed to deploy template: ${errorMessage}`);
+  
+      // Optional: remove the placeholder if deployment fails
+      setUserpods(prev => prev.filter(p => p.name !== placeholderName));
+      setAllpods(prev => prev.filter(p => p.name !== placeholderName));
     }
   };
 
@@ -271,8 +278,9 @@ const TemplateManager: React.FC = () => {
       const data = await response.json();
 
       // may want to implement updating list of deployed templates to remove the one just deleted
-
-      setSelectedPodselectedPod(null);
+      if (data.success === 1) {
+        setSelectedPod(null);
+      }
 
     } catch (error) {
       console.error('Deletion failed:', error);
