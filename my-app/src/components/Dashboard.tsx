@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
     try {
       console.log('Deleting template:', selectedTemplate);
 
-      const response = await fetch('/api/proxmox/templates/delete', {
+      const response = await fetch('/api/proxmox/pods/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
