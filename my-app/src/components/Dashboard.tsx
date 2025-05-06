@@ -91,6 +91,14 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+    const templateToDeploy = selectedTemplate;
+
+    // assume will work and add to list (hopefully helps prevent user repeatedly spawning pods)
+    const newPod: DeployedPod = { name: `LOADING NEW ${templateToDeploy} POD... `};
+
+    // optimistically update the userpods and allpods state
+    setUserpods(prev => [...prev, newPod]);
+
     try {
       console.log('Deploying template:', selectedTemplate);
 
@@ -145,6 +153,12 @@ const Dashboard: React.FC = () => {
       alert('Please select a template to delete.');
       return;
     }
+
+    const templateToDelete = selectedTemplate; // stores template to remove from list later
+
+    // update state before api call (we are assuming it works)
+    // if page is refreshed too fast it might still be on the list
+    setUserpods(prevPods => prevPods.filter(pod => pod.name !== templateToDelete));
 
     try {
       console.log('Deleting template:', selectedTemplate);

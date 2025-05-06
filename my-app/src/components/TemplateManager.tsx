@@ -1,5 +1,5 @@
 import React, { CSSProperties, useState, useEffect } from 'react';
-import { MinusCircleIcon, PlusCircleIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline';
+import { MinusCircleIcon, PlusCircleIcon, PlayIcon, StopIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface Template {
   name: string;
@@ -171,6 +171,16 @@ const TemplateManager: React.FC = () => {
       return;
     }
 
+    const templateToDeploy = selectedPod;
+
+    // assume will work and add to list (hopefully helps prevent user repeatedly spawning pods)
+    const newPod: DeployedPod = { name: `LOADING NEW ${templateToDeploy} POD... `};
+
+    // optimistically update the userpods and allpods state
+    setUserpods(prev => [...prev, newPod]);
+    setAllpods(prev => [...prev, newPod]);
+
+
     try {
       console.log('Deploying template:', selectedPod);
 
@@ -225,6 +235,13 @@ const TemplateManager: React.FC = () => {
       alert('Please select a pod to delete.');
       return;
     }
+
+    const templateToDelete = selectedPod; // stores template to remove from list later
+
+    // update state before api call (we are assuming it works)
+    // if page is refreshed too fast it might still be on the list
+    setUserpods(prevPods => prevPods.filter(pod => pod.name !== templateToDelete));
+    setAllpods(prevAllPods => prevAllPods.filter(pod => pod.name !== templateToDelete));
 
     try {
       console.log('Deleting pod:', selectedPod);
